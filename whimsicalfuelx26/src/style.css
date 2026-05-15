@@ -1,0 +1,3 @@
+.v-app-bar {
+  border-color: rgb(var(--v-theme-primary)) !important;
+}
