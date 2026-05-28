@@ -12,7 +12,7 @@
 
     onMounted(() => {
         window.google.accounts.id.initialize({
-            client_id: '320875031498-9djdthf86ghf6jh56gmdcc88bfdi2gt6.apps.googleusercontent.com',
+            client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
             callback: handleGoogleResponse
         });
 
