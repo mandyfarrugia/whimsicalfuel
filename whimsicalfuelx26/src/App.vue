@@ -1,3 +1,14 @@
+<script setup>
+  import AppBar from './components/user-interface/navigation/AppBar.vue';
+  import { onMounted } from 'vue';
+  import { useAuthenticationStore } from './stores/authenticationStore.js';
+
+  const authenticationStore = useAuthenticationStore();
+
+  onMounted(() => {
+    authenticationStore.initialiseAuthenticationListener();
+  });
+</script>
 <template>
   <v-app class="bg-background">
     <AppBar></AppBar>
@@ -6,6 +17,3 @@
     </v-main>
   </v-app>
 </template>
-<script setup>
-  import AppBar from './components/user-interface/navigation/AppBar.vue';
-</script>

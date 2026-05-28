@@ -8,4 +8,9 @@ export default defineConfig({
     vue(),
     vuetify({ autoImport: true })
   ],
+  server: {
+      headers: {
+          'Cross-Origin-Opener-Policy': 'same-origin-allow-popups'
+      }
+  }
 })
