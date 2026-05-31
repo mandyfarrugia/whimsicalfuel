@@ -1,12 +1,12 @@
 <script setup>
   import AppBar from './components/user-interface/navigation/AppBar.vue';
   import { onMounted } from 'vue';
-  import { useAuthenticationStore } from './stores/authenticationStore.js';
+  import { useAuthenticationPiniaStore } from './stores/authenticationPiniaStore.js';
 
-  const authenticationStore = useAuthenticationStore();
+  const authenticationPiniaStore = useAuthenticationPiniaStore();
 
   onMounted(() => {
-    authenticationStore.initialiseAuthenticationListener();
+    authenticationPiniaStore.initialiseAuthenticationListener();
   });
 </script>
 <template>
