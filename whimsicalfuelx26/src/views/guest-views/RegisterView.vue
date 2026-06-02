@@ -18,6 +18,7 @@
         try {
             errorMessage.value = '';
             await authenticationPiniaStore.loginWithGoogleCredentials(idToken);
+            router.push('/recipes-catalogue');
         } catch(error) {
             console.error(error);
             errorMessage.value = authenticationPiniaStore.errorMessage || 'Google login failed!';

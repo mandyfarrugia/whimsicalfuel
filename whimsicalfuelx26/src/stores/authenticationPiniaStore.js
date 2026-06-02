@@ -9,6 +9,7 @@ export const useAuthenticationPiniaStore = defineStore('authentication', () => {
     const userProfile = ref(null);
     const isLoading = ref(true);
     const errorMessage = ref('');
+    const isAuthenticationReady = ref(false);
 
     const isAuthenticated = computed(() => !!userAccount.value);
 
@@ -82,5 +83,38 @@ export const useAuthenticationPiniaStore = defineStore('authentication', () => {
         }
     }
 
-    return { userAccount, isLoading, errorMessage, isAuthenticated, registerUser, authenticateUser, initialiseAuthenticationListener, loginWithGoogleCredentials, logout };
+    const getUserProfileById = async (userId) => {
+        try {
+            const documentCorrespondingToUserById = doc(firebaseDatabase, 'users', userId);
+            const snapshot = await getDoc(documentCorrespondingToUserById);
+
+            if(snapshot.exists()) {
+                userProfile.value = snapshot.data();
+            } else {
+                userProfile.value = null;
+            }
+        } catch(error) {
+            console.error(`An error has occurred while fetching the user profile: ${error}`);
+            userProfile.value = null;
+            throw error;
+        }
+    }
+
+    const trackAuthenticationState = () => {
+        return onAuthStateChanged(firebaseAuthentication, async (authenticatedUser) => {
+            try {
+                userAccount.value = authenticatedUser;
+
+                if(authenticatedUser) {
+                    await getUserProfileById(authenticatedUser.uid);
+                } else {
+                    userProfile.value = null;
+                }
+            } finally {
+                isAuthenticationReady.value = true;
+            }
+        });
+    }
+
+    return { userAccount, isLoading, errorMessage, isAuthenticated, registerUser, authenticateUser, initialiseAuthenticationListener, loginWithGoogleCredentials, logout, getUserProfileById, trackAuthenticationState, isAuthenticationReady };
 });
