@@ -1,16 +1,20 @@
 <script setup>
     defineProps({
-        selectedFilter: String,
+        modelValue: String,
         filterOptions: Array,
         label: String,
-    })
+    });
+
+    const emit = defineEmits(['update:modelValue']);
 </script>
 <template>
     <v-select
-        :v-model="selectedFilter"
+        :model-value="modelValue"
+        prepend-inner-icon="mdi-filter"
         :items="filterOptions"
         :label="label"
         density="comfortable"
         variant="outlined"
-        clearable/>
+        clearable
+        @update:model-value="emit('update:modelValue', $event)"/>
 </template>

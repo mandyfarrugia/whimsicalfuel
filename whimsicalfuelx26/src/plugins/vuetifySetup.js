@@ -24,7 +24,9 @@ const mediterraneanTheme = {
         'on-surface': '#2A2A2A',
         'on-primary': '#FFFFFF',
         'on-secondary': '#FFFFFF',
-        'on-error': '#FFFFFF'
+        'on-error': '#FFFFFF',
+        'on-warning': '#FFFFFF',
+        'on-success': '#FFFFFF'
     }
 }
 
