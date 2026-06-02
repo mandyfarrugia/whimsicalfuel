@@ -13,7 +13,8 @@
         {
             id: 1,
             title: 'Pizza fuq il-Hobz',
-            type: 'Pizza',
+            mealTypes: 'Pizza',
+            proteinTypes: 'Tuna',
             ingredients: [
                 '100g bread of choice',
                 '40g tomato polpa',
@@ -28,7 +29,7 @@
         {
             id: 2,
             title: 'Cordon Bleu',
-            type: ['Protein', 'Poultry'],
+            mealTypes: 'Poultry',
             ingredients: [
                 '100g bread of choice',
                 '40g tomato polpa',
@@ -43,7 +44,7 @@
         {
             id: 3,
             title: 'Carrot Cake Muffins',
-            type: 'Dessert',
+            mealTypes: 'Dessert',
             ingredients: [
                 '100g bread of choice',
                 '40g tomato polpa',
@@ -58,7 +59,7 @@
         {
             id: 4,
             title: 'Crunchy Tuna Patties',
-            type: ['Protein', 'Fish'],
+            mealTypes: 'Fish',
             ingredients: [
                 '100g bread of choice',
                 '40g tomato polpa',
@@ -73,7 +74,7 @@
         {
             id: 5,
             title: '3 High Protein Burgers',
-            type: ['Protein', 'Beef'],
+            mealTypes: 'Beef',
             ingredients: [
                 '100g bread of choice',
                 '40g tomato polpa',
@@ -88,7 +89,7 @@
         {
             id: 6,
             title: 'Burger Pie',
-            type: 'Beef',
+            mealTypes: 'Beef',
             ingredients: [
                 '100g bread of choice',
                 '40g tomato polpa',
@@ -102,17 +103,27 @@
         }
     ]);
 
+    const refinedRecipes = computed(() => {
+        let resultSet = [...recipes];
+
+        if(searchQuery.value) {
+            resultSet = resultSet.filter(recipe => recipe.title.toLowerCase().includes(searchQuery.value.toLowerCase()))
+        }
+
+        return resultSet;
+    });
+
     const currentPage = ref(1);
     const RECIPES_PER_PAGE = 5;
 
     const paginatedRecipesCatalogue = computed(() => {
         const startIndex = (currentPage.value - 1) * RECIPES_PER_PAGE;
         const endIndex = startIndex + RECIPES_PER_PAGE;
-        return recipes.slice(startIndex, endIndex);
+        return refinedRecipes.value.slice(startIndex, endIndex);
     });
 
     const totalPages = computed(() => {
-        return Math.ceil(recipes.length / RECIPES_PER_PAGE);
+        return Math.ceil(refinedRecipes.value.length / RECIPES_PER_PAGE);
     })
 </script>
 <template>

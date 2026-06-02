@@ -15,9 +15,10 @@
     const foodCategories = [
         'Pizza 🍕',
         'Pasta 🍝',
-        'Dessert 🍰',
+        'Desserts 🍰',
         'Wraps 🌯',
-        'Pies 🥧'
+        'Pies 🥧',
+        'Burgers 🍔'
     ];
 
     const sortedFoodCategories = foodCategories.sort((firstCategory, secondCategory) => firstCategory.localeCompare(secondCategory));
