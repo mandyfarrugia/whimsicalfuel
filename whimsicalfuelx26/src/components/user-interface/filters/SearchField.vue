@@ -1,16 +1,16 @@
 <script setup>
     defineProps({
-        selectedFilter: String,
-        filterOptions: Array,
         label: String,
-    })
+        searchQuery: String
+    });
 </script>
 <template>
-    <v-select
-        :v-model="selectedFilter"
-        :items="filterOptions"
+    <v-text-field
+        :v-model="searchQuery"
         :label="label"
+        prepend-icon="mdi-magnify"
         density="comfortable"
         variant="outlined"
-        clearable/>
+        clearable
+    />
 </template>
