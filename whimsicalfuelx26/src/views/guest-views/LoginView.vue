@@ -5,8 +5,10 @@
     import { useAuthenticationPiniaStore } from '../../stores/authenticationPiniaStore.js';
     import { useVuelidate } from '@vuelidate/core';
     import { required, email, helpers } from '@vuelidate/validators';
+    import { useRouter } from 'vue-router';
 
     const authenticationPiniaStore = useAuthenticationPiniaStore();
+    const router = useRouter();
     const errorMessage = ref('');
 
     async function loginWithGoogle(idToken) {
@@ -43,10 +45,16 @@
         password: !v$.value.password.$dirty ? [] : v$.value.password.$errors.map(error => error.$message)
     }));
 
-    async function onSubmit() {
+    async function authenticateUser() {
         const isValid = await v$.value.$validate();
         if(!isValid) return;
-        console.log('Submit!');
+
+        try {
+            await authenticationPiniaStore.authenticateUser(loginForm);
+            router.push('/recipes-catalogue');
+        } catch(error) {
+            console.error(error);
+        }
     }
 </script>
 <template>
@@ -55,7 +63,7 @@
             title="Login"
             subtitle="Get back on track with your health journey!"
             button-text="Login"
-            @submit="onSubmit"
+            @submit="authenticateUser"
             :disabled-based-on="v$.$invalid">
             <template #form-content>
                 <v-text-field 

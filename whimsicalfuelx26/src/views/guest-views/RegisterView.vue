@@ -6,9 +6,12 @@
     import { useVuelidate } from '@vuelidate/core';
     import { email, helpers, required, sameAs, minLength, maxLength } from '@vuelidate/validators';
     import { useCustomDateValidation } from '../../composables/useCustomDateValidation.js';
+    import { useRouter } from 'vue-router';
 
     const { isDateValid, cannotBeFromTheFuture, isAtLeastOfMinimumAge }  = useCustomDateValidation();
     const authenticationPiniaStore = useAuthenticationPiniaStore();
+    const router = useRouter();
+
     const errorMessage = ref('');
 
     async function loginWithGoogle(idToken) {
@@ -24,6 +27,7 @@
     const registrationForm = reactive({
         firstName: '',
         lastName: '',
+        username: '',
         emailAddress: '',
         dateOfBirth: null,
         password: '',
@@ -41,6 +45,10 @@
         lastName: {
             minLength: 2,
             maxLength: 75
+        },
+        username: {
+            minLength: 2,
+            maxLength: 35
         },
         dateOfBirth: {
             minimumAge: 18
@@ -70,6 +78,17 @@
                 maxLength(inputFieldsLimits.lastName.maxLength)
             )
         },
+        username: {
+            required: helpers.withMessage('Username is required!', required),
+            minLength: helpers.withMessage(
+                ({ $params }) => `Username must be at least ${$params.min} characters long!`,
+                minLength(inputFieldsLimits.username.minLength)
+            ),
+            maxLength: helpers.withMessage(
+                ({ $params }) => `Username must not exceed ${$params.max} characters!`,
+                maxLength(inputFieldsLimits.username.maxLength)
+            )
+        },
         dateOfBirth: {
             isDateValid,
             cannotBeFromTheFuture,
@@ -95,11 +114,24 @@
     const validationErrors = computed(() => ({
         firstName: !v$.value.firstName.$dirty ? [] : v$.value.firstName.$errors.map(error => error.$message),
         lastName: !v$.value.lastName.$dirty ? [] : v$.value.lastName.$errors.map(error => error.$message),
+        username: !v$.value.username.$dirty ? [] : v$.value.username.$errors.map(error => error.$message),
         dateOfBirth: !v$.value.dateOfBirth.$dirty ? [] : v$.value.dateOfBirth.$errors.map(error => error.$message),
         emailAddress: !v$.value.emailAddress.$dirty ? [] : v$.value.emailAddress.$errors.map(error => error.$message),
         password: !v$.value.password.$dirty ? [] : v$.value.password.$errors.map(error => error.$message),
         confirmPassword: !v$.value.confirmPassword.$dirty ? [] : v$.value.confirmPassword.$errors.map(error => error.$message)
     }));
+
+    const registerUser = async () => {
+        const isValid = await v$.value.$validate();
+        if(!isValid) return;
+        
+        try {
+            await authenticationPiniaStore.registerUser(registrationForm);
+            router.push('/recipes-catalogue');
+        } catch(error) {
+            console.error(error);
+        }
+    }
 </script>
 <template>
     <div class="w-100 pa-4 pt-10">
@@ -107,7 +139,8 @@
             title="Register"
             subtitle="Get started on your health journey today!"
             button-text="Register"
-            :disabled-based-on="v$.$invalid">
+            :disabled-based-on="v$.$invalid"
+            @submit="registerUser">
             <template #form-content>
                 <v-text-field
                     :error="v$.firstName.$error"
@@ -125,7 +158,17 @@
                     :counter="inputFieldsLimits.lastName.maxLength"
                     label="Last Name"
                     density="comfortable"
-                    variant="outlined"></v-text-field>
+                    variant="outlined">
+                </v-text-field>
+                <v-text-field
+                    :error="v$.username.$error"
+                    :error-messages="validationErrors.username"
+                    v-model="registrationForm.username"
+                    :counter="inputFieldsLimits.username.maxLength"
+                    label="Username"
+                    density="comfortable"
+                    variant="outlined">
+                </v-text-field>
                 <v-text-field
                     :error="v$.dateOfBirth.$error",
                     :error-messages="validationErrors.dateOfBirth"

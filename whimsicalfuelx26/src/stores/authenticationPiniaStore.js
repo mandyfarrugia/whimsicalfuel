@@ -2,7 +2,7 @@ import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import { onAuthStateChanged, signOut, GoogleAuthProvider, signInWithCredential, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
 import { firebaseAuthentication, firebaseDatabase } from "../firebase/firebase";
-import { serverTimestamp, setDoc } from "firebase/firestore";
+import { getDoc, serverTimestamp, setDoc, doc } from "firebase/firestore";
 
 export const useAuthenticationPiniaStore = defineStore('authentication', () => {
     const userAccount = ref(null);
@@ -21,23 +21,24 @@ export const useAuthenticationPiniaStore = defineStore('authentication', () => {
 
     const registerUser = async (payload) => {
         try {
+            const newUserAccount = await createUserWithEmailAndPassword(firebaseAuthentication, payload.emailAddress, payload.password);
+            const referenceToUsersDocument = doc(firebaseDatabase, 'users', newUserAccount.user.uid);
+            
             const newUserProfile = {
                 firstName: payload.firstName,
                 lastName: payload.lastName,
                 username: payload.username,
                 dateOfBirth: payload.dateOfBirth,
-                role: 'user'
-            };
-
-            const newUserAccount = await createUserWithEmailAndPassword(firebaseAuthentication, payload.emailAddress, payload.password);
-            await setDoc(doc(firebaseDatabase, 'users', newUserAccount.user.uid), {
-                ...newUserProfile,
                 emailAddress: newUserAccount.user.email,
+                role: 'user',
                 createdAt: serverTimestamp()
-            });
+            };
+            
+            await setDoc(referenceToUsersDocument, newUserProfile);
+            const documentOfNewUserProfile = await getDoc(referenceToUsersDocument);
 
-            userAccount.value = newUserAccount;
-            userProfile.value = newUserProfile;
+            userAccount.value = newUserAccount.user;
+            userProfile.value = documentOfNewUserProfile.data();
         } catch(error) {
             console.error(`An error has occurred while attempting to register a new user: ${error}`);
             throw error;
@@ -81,5 +82,5 @@ export const useAuthenticationPiniaStore = defineStore('authentication', () => {
         }
     }
 
-    return { userAccount, isLoading, errorMessage, isAuthenticated, initialiseAuthenticationListener, loginWithGoogleCredentials, logout };
+    return { userAccount, isLoading, errorMessage, isAuthenticated, registerUser, authenticateUser, initialiseAuthenticationListener, loginWithGoogleCredentials, logout };
 });
