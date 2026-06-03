@@ -13,31 +13,35 @@
     });
 
     const foodCategories = [
-        'Pizza 🍕',
-        'Pasta 🍝',
-        'Desserts 🍰',
-        'Wraps 🌯',
-        'Pies 🥧',
-        'Burgers 🍔'
+        { title: 'Pizza 🍕', value: 'Pizza' },
+        { title: 'Pasta 🍝', value: 'Pasta' },
+        { title: 'Desserts 🍰', value: 'Desserts' },
+        { title: 'Wraps 🌯', value: 'Wraps' },
+        { title: 'Pies 🥧', value: 'Pies' },
+        { title: 'Burgers 🍔', value: 'Burgers' },
+        { title: 'Patties 🧆', value: 'Patties' },
+        { title: 'Main Dish 🍽️', value: 'Main Dish' },
+        { title: 'Sushi 🍣', value: 'Sushi' },
+        { title: 'Seafood 🦞', value: 'Seafood' }
     ];
 
-    const sortedFoodCategories = foodCategories.sort((firstCategory, secondCategory) => firstCategory.localeCompare(secondCategory));
+    const sortedFoodCategories = [...foodCategories].sort((firstCategory, secondCategory) => firstCategory.title.localeCompare(secondCategory.title));
 
     const proteinTypes = [
-        'Chicken 🍗',
-        'Beef 🥩',
-        'Fish 🐟',
-        'Eggs 🍳',
-        'Tuna 🐟',
-        'Turkey 🦃',
-        'Plant-Based 🌱'
+        { title: 'Chicken 🍗', value: 'Chicken' },
+        { title: 'Beef 🥩', value: 'Beef' },
+        { title: 'Fish 🐟', value: 'Fish' },
+        { title: 'Eggs 🍳', value: 'Eggs' },
+        { title: 'Tuna 🐟', value: 'Tuna' },
+        { title: 'Turkey 🦃', value: 'Turkey' },
+        { title: 'Plant-Based 🌱', value: 'Plant-Based' }
     ];
 
     const mealPeriods = [
-        'Breakfast 🍳',
-        'Lunch 🥗',
-        'Dinner 🍽️',
-        'Snack 🍎'
+        { title: 'Breakfast 🍳', value: 'Breakfast' },
+        { title: 'Lunch 🥗', value: 'Lunch' },
+        { title: 'Dinner 🍽️', value: 'Dinner' },
+        { title: 'Snack 🍎', value: 'Snack' }
     ];
 
     const sortingOptions = [

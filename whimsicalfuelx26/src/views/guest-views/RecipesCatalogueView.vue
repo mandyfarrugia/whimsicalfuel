@@ -1,7 +1,8 @@
 <script setup>
     import { reactive, ref, computed } from 'vue';
     import DataRefinement from '../../components/user-interface/wrappers/DataRefinement.vue';
-    import RecipeCard from '../../components/user-interface/wrappers/RecipeCard.vue';
+    import RecipeCard from '../../components/user-interface/cards/RecipeCard.vue';
+    import MessageCard from '../../components/user-interface/cards/MessageCard.vue';
 
     const searchQuery = ref(null);
     const selectedFoodCategory = ref(null);
@@ -15,6 +16,7 @@
             title: 'Pizza fuq il-Hobz',
             mealTypes: 'Pizza',
             proteinTypes: 'Tuna',
+            mealPeriods: 'Lunch',
             ingredients: [
                 '100g bread of choice',
                 '40g tomato polpa',
@@ -29,7 +31,8 @@
         {
             id: 2,
             title: 'Cordon Bleu',
-            mealTypes: 'Poultry',
+            mealTypes: 'Main Dish',
+            mealPeriods: ['Lunch', 'Dinner'],
             ingredients: [
                 '100g bread of choice',
                 '40g tomato polpa',
@@ -38,13 +41,15 @@
                 '1/2 teaspoon capers',
                 '20g mozzarella'
             ],
+            proteinTypes: ['Chicken', 'Eggs'],
             serving: 2,
             videoUrl: 'https://www.youtube.com/embed/NMCuenDFt9g?si=uoiM6FJEofJqv4-v'
         },
         {
             id: 3,
             title: 'Carrot Cake Muffins',
-            mealTypes: 'Dessert',
+            mealTypes: 'Desserts',
+            mealPeriods: ['Breakfast', 'Snack'],
             ingredients: [
                 '100g bread of choice',
                 '40g tomato polpa',
@@ -59,7 +64,8 @@
         {
             id: 4,
             title: 'Crunchy Tuna Patties',
-            mealTypes: 'Fish',
+            mealTypes: ['Patties', 'Seafood'],
+            mealPeriods: ['Lunch', 'Breakfast'],
             ingredients: [
                 '100g bread of choice',
                 '40g tomato polpa',
@@ -74,7 +80,8 @@
         {
             id: 5,
             title: '3 High Protein Burgers',
-            mealTypes: 'Beef',
+            mealTypes: ['Burgers', 'Patties'],
+            mealPeriods: ['Lunch', 'Dinner'],
             ingredients: [
                 '100g bread of choice',
                 '40g tomato polpa',
@@ -89,7 +96,8 @@
         {
             id: 6,
             title: 'Burger Pie',
-            mealTypes: 'Beef',
+            mealTypes: ['Burgers', 'Patties', 'Pies'],
+            mealPeriods: ['Lunch', 'Dinner'],
             ingredients: [
                 '100g bread of choice',
                 '40g tomato polpa',
@@ -107,7 +115,25 @@
         let resultSet = [...recipes];
 
         if(searchQuery.value) {
-            resultSet = resultSet.filter(recipe => recipe.title.toLowerCase().includes(searchQuery.value.toLowerCase()))
+            resultSet = resultSet.filter(recipe => recipe.title.toLocaleLowerCase().includes(searchQuery.value.toLocaleLowerCase()))
+        }
+
+        if(selectedFoodCategory.value) {
+            resultSet = resultSet.filter((recipe) => {
+                if(Array.isArray(recipe.mealTypes))
+                    return recipe.mealTypes.includes(selectedFoodCategory.value);
+
+                return recipe.mealTypes.toLocaleLowerCase() === selectedFoodCategory.value.toLocaleLowerCase();
+            });
+        }
+
+        if(selectedMealPeriod.value) {
+            resultSet = resultSet.filter((recipe) => {
+                if(Array.isArray(recipe.mealPeriods))
+                    return recipe.mealPeriods.includes(selectedMealPeriod.value);
+
+                return recipe.mealPeriods.toLocaleLowerCase() === selectedMealPeriod.value.toLocaleLowerCase();
+            })
         }
 
         return resultSet;
@@ -136,18 +162,23 @@
             v-model:selected-protein-type="selectedProteinType"
             v-model:selected-sorting-option="selectedSortingOption"/>
         <div class="d-flex flex-wrap ga-4 justify-center">
-            <RecipeCard
+            <RecipeCard v-if="refinedRecipes && refinedRecipes.length > 0"
                 v-for="recipe in paginatedRecipesCatalogue"
                 :recipe="recipe"
                 :key="recipe.id"/>
+            <MessageCard
+                v-else
+                emoji="😟"
+                title="Oh no!"
+                message="Unfortunately, no recipes are available at the moment! Please check back later!"/>
         </div>
-        <div class="d-flex justify-center mt-6">
+        <div v-if="totalPages > 0" class="d-flex justify-center mt-6">
             <v-pagination
                 v-model="currentPage"
                 :length="totalPages"
                 rounded="pill"
                 color="primary"/>
         </div>
-        <p class="text-center mt-1">Page {{ currentPage }} of {{ totalPages }}</p>
+        <p v-if="totalPages > 0" class="text-center mt-1">Page {{ currentPage }} of {{ totalPages }}</p>
     </div>
 </template>

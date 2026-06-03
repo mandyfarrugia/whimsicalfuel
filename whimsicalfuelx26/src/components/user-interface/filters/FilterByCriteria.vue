@@ -13,6 +13,8 @@
         prepend-inner-icon="mdi-filter"
         :items="filterOptions"
         :label="label"
+        item-title="title"
+        item-value="value"
         density="comfortable"
         variant="outlined"
         clearable

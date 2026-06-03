@@ -13,6 +13,8 @@
         prepend-inner-icon="mdi-magnify"
         density="comfortable"
         variant="outlined"
+        item-title="title"
+        item-value="value"
         clearable
         @update:model-value="emit('update:modelValue', $event)"
     />

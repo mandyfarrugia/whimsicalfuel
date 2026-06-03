@@ -2,15 +2,12 @@
   border-color: rgb(var(--v-theme-primary)) !important;
 }
 
-.video-placeholder {
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  overflow: hidden;
+.state-emoji {
+  font-size: clamp(4rem, 8vw, 5rem); /* Use the preferred 8vw when possible, but do not go below the minimum 4rem and never exceed the maximum 5rem. */
+  line-height: 1; /* Set the line height to be equal to the font size, removing any unnecessary vertical spacing. */
 }
 
-.iframe-video {
-  border: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
+.state-heading {
+  font-size: clamp(1.8rem, 5vw, 2.25rem);
+  line-height: 1;
 }

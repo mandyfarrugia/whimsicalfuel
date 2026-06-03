@@ -1,4 +1,6 @@
 <script setup>
+    import VideoPlaceholder from '../wrappers/VideoPlaceholder.vue';
+
     defineProps({
         recipe: Object
     })
@@ -7,10 +9,9 @@
     <v-card
         width="600"
         max-width="100%"
-        class="d-flex flex-column align-center text-center overflow-hidden">
-        <div class="video-placeholder">
-            <iframe class="iframe-video" :src="recipe.videoUrl" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin"  allowfullscreen></iframe>
-        </div>
+        class="d-flex flex-column align-center text-center overflow-hidden"
+        elevation="2">
+        <VideoPlaceholder :video-url="recipe.videoUrl"/>
         <div class="pa-4">
             <h2 class="text-h6 mt-5 mb-4 font-weight-bold">{{ recipe.title }}</h2>
         </div>
