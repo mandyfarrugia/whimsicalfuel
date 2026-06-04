@@ -1,5 +1,5 @@
 <script setup>
-    import { reactive, ref, computed } from 'vue';
+    import { reactive, ref, computed, watch } from 'vue';
     import DataRefinement from '../../components/user-interface/wrappers/DataRefinement.vue';
     import RecipeCard from '../../components/user-interface/cards/RecipeCard.vue';
     import StateMessageCard from '../../components/user-interface/cards/StateMessageCard.vue';
@@ -149,14 +149,12 @@
             })
         }
 
-        if(selectedSortingOption.value) {
-            switch(selectedSortingOption.value) {
-                case 'recipe-descending':
-                    resultSet = resultSet.sort((firstCategory, secondCategory) => secondCategory.title.localeCompare(firstCategory.title));
-                    break;
-                default:
-                    resultSet = resultSet.sort((firstCategory, secondCategory) => firstCategory.title.localeCompare(secondCategory.title))
-            }
+        switch(selectedSortingOption.value) {
+            case 'recipe-descending':
+                resultSet = resultSet.sort((firstCategory, secondCategory) => secondCategory.title.localeCompare(firstCategory.title));
+                break;
+            default:
+                resultSet = resultSet.sort((firstCategory, secondCategory) => firstCategory.title.localeCompare(secondCategory.title))
         }
 
         return resultSet;
@@ -173,7 +171,14 @@
 
     const totalPages = computed(() => {
         return Math.ceil(refinedRecipes.value.length / RECIPES_PER_PAGE);
-    })
+    });
+
+    watch(
+        [searchQuery, selectedFoodCategory, selectedMealPeriod, selectedProteinType, selectedSortingOption],
+        () => {
+            currentPage.value = 1;
+        }
+    )
 </script>
 <template>
     <div class="w-100 pa-5 pt-10">
