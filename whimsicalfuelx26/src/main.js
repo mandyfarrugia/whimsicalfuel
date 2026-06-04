@@ -5,6 +5,7 @@ import App from './App.vue';
 import { watch } from 'vue';
 import vuetifySetup from './plugins/vuetifySetup';
 import { useAuthenticationPiniaStore } from './stores/authenticationPiniaStore.js';
+import 'animate.css';
 import './style.css';
 
 const app = createApp(App);

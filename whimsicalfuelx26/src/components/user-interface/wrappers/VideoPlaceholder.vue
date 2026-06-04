@@ -31,7 +31,9 @@
 <style>
     .video-placeholder {
         width: 100%;
-        aspect-ratio: 16 / 9;
+        aspect-ratio: 16 / 9; /* Video area should retain the same shape as a YouTube video, irrespective of the width of the card. */
+        /* Anything outside the element's box should be clipped/hidden.
+         * Ensure the video/skeleton stays neatly inside the 16:9 box. */
         overflow: hidden;
         background-color: #F0E9DF;
     }
@@ -44,8 +46,11 @@
     }
 
     .video-skeleton {
+        /* Skeleton fills the full area where the video resides. 
+         * Therefore, if the parent is a 16:9 rectangle, the skeleton also becomes a 16:9 rectangle. */
         width: 100%;
         height: 100%;
+
         /* The gradient runs horizontally from left to right. 
          * Shimmer will move sideways across the video placeholder. */
         background: linear-gradient(

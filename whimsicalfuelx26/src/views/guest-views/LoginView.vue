@@ -6,10 +6,12 @@
     import { useVuelidate } from '@vuelidate/core';
     import { required, email, helpers } from '@vuelidate/validators';
     import { useRouter } from 'vue-router';
+    import { useAnimationHelper } from '../../composables/useAnimationHelper.js';
 
     const authenticationPiniaStore = useAuthenticationPiniaStore();
     const router = useRouter();
     const errorMessage = ref('');
+    const { getErrorAnimationClass } = useAnimationHelper();
 
     async function loginWithGoogle(idToken) {
         try {
@@ -69,6 +71,7 @@
             <template #form-content>
                 <v-text-field 
                     label="Email"
+                    :class="[getErrorAnimationClass(v$.emailAddress)]"
                     :error="v$.emailAddress.$error"
                     :error-messages="validationErrors.emailAddress"
                     v-model="loginForm.emailAddress"
@@ -78,6 +81,7 @@
                 <v-text-field
                     label="Password"
                     type="password"
+                    :class="[getErrorAnimationClass(v$.password)]"
                     :error="v$.password.$error"
                     :error-messages="validationErrors.password"
                     v-model="loginForm.password"

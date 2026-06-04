@@ -2,7 +2,7 @@
     import { reactive, ref, computed } from 'vue';
     import DataRefinement from '../../components/user-interface/wrappers/DataRefinement.vue';
     import RecipeCard from '../../components/user-interface/cards/RecipeCard.vue';
-    import MessageCard from '../../components/user-interface/cards/MessageCard.vue';
+    import StateMessageCard from '../../components/user-interface/cards/StateMessageCard.vue';
 
     const searchQuery = ref(null);
     const selectedFoodCategory = ref(null);
@@ -166,7 +166,7 @@
                 v-for="recipe in paginatedRecipesCatalogue"
                 :recipe="recipe"
                 :key="recipe.id"/>
-            <MessageCard
+            <StateMessageCard
                 v-else
                 emoji="😟"
                 title="Oh no!"
