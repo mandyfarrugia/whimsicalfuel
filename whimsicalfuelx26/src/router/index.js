@@ -64,6 +64,10 @@ router.beforeEach(async (to) => {
         await new Promise((resolve) => setTimeout(resolve, 50));
     }
 
+    if(to.meta.requiresGuest && authenticationPiniaStore.isAuthenticated) {
+        return '/recipes-catalogue';
+    }
+
     if(to.meta.requiresAuth && !authenticationPiniaStore.isAuthenticated) {
         return '/login';
     }
