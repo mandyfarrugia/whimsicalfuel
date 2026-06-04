@@ -33,6 +33,7 @@
             title: 'Cordon Bleu',
             mealTypes: 'Main Dish',
             mealPeriods: ['Lunch', 'Dinner'],
+            proteinTypes: ['Chicken', 'Eggs'],
             ingredients: [
                 '100g bread of choice',
                 '40g tomato polpa',
@@ -41,7 +42,6 @@
                 '1/2 teaspoon capers',
                 '20g mozzarella'
             ],
-            proteinTypes: ['Chicken', 'Eggs'],
             serving: 2,
             videoUrl: 'https://www.youtube.com/embed/NMCuenDFt9g?si=uoiM6FJEofJqv4-v'
         },
@@ -50,6 +50,7 @@
             title: 'Carrot Cake Muffins',
             mealTypes: 'Desserts',
             mealPeriods: ['Breakfast', 'Snack'],
+            proteinTypes: ['Eggs'],
             ingredients: [
                 '100g bread of choice',
                 '40g tomato polpa',
@@ -64,8 +65,9 @@
         {
             id: 4,
             title: 'Crunchy Tuna Patties',
-            mealTypes: ['Patties', 'Seafood'],
-            mealPeriods: ['Lunch', 'Breakfast'],
+            mealTypes: ['Patties', 'Seafood', 'Main Dish'],
+            mealPeriods: ['Lunch', 'Dinner'],
+            proteinTypes: ['Tuna', 'Eggs'],
             ingredients: [
                 '100g bread of choice',
                 '40g tomato polpa',
@@ -80,8 +82,9 @@
         {
             id: 5,
             title: '3 High Protein Burgers',
-            mealTypes: ['Burgers', 'Patties'],
+            mealTypes: ['Burgers', 'Patties', 'Main Dish'],
             mealPeriods: ['Lunch', 'Dinner'],
+            proteinTypes: ['Beef'],
             ingredients: [
                 '100g bread of choice',
                 '40g tomato polpa',
@@ -96,8 +99,9 @@
         {
             id: 6,
             title: 'Burger Pie',
-            mealTypes: ['Burgers', 'Patties', 'Pies'],
+            mealTypes: ['Burgers', 'Patties', 'Pies', 'Main Dish'],
             mealPeriods: ['Lunch', 'Dinner'],
+            proteinTypes: 'Beef',
             ingredients: [
                 '100g bread of choice',
                 '40g tomato polpa',
@@ -134,6 +138,25 @@
 
                 return recipe.mealPeriods.toLocaleLowerCase() === selectedMealPeriod.value.toLocaleLowerCase();
             })
+        }
+
+        if(selectedProteinType.value) {
+            resultSet = resultSet.filter((recipe) => {
+                if(Array.isArray(recipe.proteinTypes))
+                    return recipe.proteinTypes.includes(selectedProteinType.value);
+
+                return recipe.proteinTypes.toLocaleLowerCase() === selectedProteinType.value.toLocaleLowerCase();
+            })
+        }
+
+        if(selectedSortingOption.value) {
+            switch(selectedSortingOption.value) {
+                case 'recipe-descending':
+                    resultSet = resultSet.sort((firstCategory, secondCategory) => secondCategory.title.localeCompare(firstCategory.title));
+                    break;
+                default:
+                    resultSet = resultSet.sort((firstCategory, secondCategory) => firstCategory.title.localeCompare(secondCategory.title))
+            }
         }
 
         return resultSet;
