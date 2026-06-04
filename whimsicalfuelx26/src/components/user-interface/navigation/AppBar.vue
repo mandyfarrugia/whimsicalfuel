@@ -1,11 +1,21 @@
 <script setup>
     import { useAuthenticationPiniaStore } from '../../../stores/authenticationPiniaStore';
     const authenticationPiniaStore = useAuthenticationPiniaStore();
+
+    const props = defineProps({
+        drawer: Boolean
+    });
+
+    const emit = defineEmits(['update:drawer']);
+
+    function toggleNavigationDrawer() {
+        emit('update:drawer', !props.drawer);
+    }
 </script>
 <template>
     <!-- border="b" denotes add a border at the bottom of the app bar. -->
     <v-app-bar color="primary-dark" app border="b">
-        <!-- <v-app-nav-icon></v-app-nav-icon> -->
+        <v-app-bar-nav-icon @click="toggleNavigationDrawer"></v-app-bar-nav-icon>
         <v-toolbar-title class="text-uppercase">WhimsicalFuelX26</v-toolbar-title>
         <v-spacer></v-spacer>
         <div class="px-4">
