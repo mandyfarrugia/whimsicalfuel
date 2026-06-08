@@ -7,6 +7,7 @@ import StatusCode403ForbiddenView from '../views/responses/StatusCode403Forbidde
 import StatusCode404NotFoundView from '../views/responses/StatusCode404NotFoundView.vue';
 import UserProfileView from '../views/restricted-views/UserProfileView.vue';
 import { useAuthenticationPiniaStore } from '../stores/authenticationPiniaStore.js';
+import AddNewRecipeView from '../views/restricted-views/AddNewRecipeView.vue';
 
 const routes = [
     { path: '/', redirect: '/login' },
@@ -34,6 +35,13 @@ const routes = [
     {
         path: '/recipes-catalogue',
         component: RecipesCatalogueView
+    },
+    {
+        path: '/add-new-recipe',
+        component: AddNewRecipeView,
+        meta: {
+            requiresAuth: true
+        }
     },
     {
         path: '/user-profile',
