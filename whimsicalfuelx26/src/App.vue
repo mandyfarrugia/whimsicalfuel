@@ -33,6 +33,14 @@
     <AppBar v-model:drawer="drawer"></AppBar>
     <v-main class="d-flex fill-height justify-center align-center">
       <router-view></router-view>
+      <vue3-snackbar
+        bottom end
+        shadow
+        success="#5C8A5C"
+        error="#C65B4B"
+        warning="#D9A441"
+        info="#7A9E7E">
+      </vue3-snackbar>
     </v-main>
   </v-app>
 </template>

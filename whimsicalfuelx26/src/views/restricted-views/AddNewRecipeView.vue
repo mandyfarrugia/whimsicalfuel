@@ -1,10 +1,10 @@
 <script setup>
-    import { computed, normalizeClass, reactive } from "vue";
+    import { computed, normalizeClass, reactive, onMounted } from "vue";
     import { useAnimationHelper } from '../../composables/useAnimationHelper.js';
     import ReusableForm from "../../components/user-interface/forms/ReusableForm.vue";
     import OrDivider from "../../components/user-interface/dividers/OrDivider.vue";
     import { useVuelidate } from "@vuelidate/core";
-    import { required, email, helpers } from "@vuelidate/validators";
+    import { required, email, helpers, minValue } from "@vuelidate/validators";
     import {
         proteinSources,
         calciumSources,
@@ -19,6 +19,15 @@
         vitaminKSources,
     } from "../../data/nutrientSources.js";
     import { mealPeriods } from "../../data/mealPeriods.js";
+    import { useSnackbar } from "vue3-snackbar";
+
+    const snackbar = useSnackbar();
+
+    const RECIPE_DRAFT_KEY = '887e86259b2fbe4be65c9fd2fa7014f900408948';
+
+    onMounted(() => {
+        fetchRecipeDrafts();
+    });
 
     const { getErrorAnimationClass } = useAnimationHelper();
 
@@ -134,15 +143,25 @@
         title: {
             required: helpers.withMessage("Title is required!", required),
         },
+        calories: {
+            required: helpers.withMessage('Calories are required!', required),
+            minValue: helpers.withMessage(
+                ({ $params }) => `Calories must be at least ${$params.min} kcal!`,
+                minValue(0)
+            )
+        },
+        mealPeriods: {
+            required: helpers.withMessage('At least one meal period is required!', required)
+        },
         ingredients: {
             $each: helpers.forEach({
-            item: {
-                required: helpers.withMessage("Item is required!", required),
-            },
-            amount: {
-                required: helpers.withMessage("Amount is required!", required),
-            },
-            }),
+                item: {
+                    required: helpers.withMessage("Item is required!", required),
+                },
+                amount: {
+                    required: helpers.withMessage("Amount is required!", required),
+                },
+            })
         },
     }));
 
@@ -152,21 +171,13 @@
         title: !v$.value.title.$dirty
             ? []
             : v$.value.title.$errors.map((error) => error.$message),
+        calories: !v$.value.calories.$dirty
+            ? []
+            : v$.value.calories.$errors.map((error) => error.$message),
+        mealPeriods: !v$.value.mealPeriods.$dirty
+            ? []
+            : v$.value.mealPeriods.$errors.map((error) => error.$message)
     }));
-
-    // const ingredientErrorMessages = computed(() => {
-    //     const errors = v$.value.ingredients.$each.$response.$errors;
-
-    //     return addNewRecipeForm.ingredients.map((ingredient, index) => ({
-    //         item: !ingredient.dirty.item
-    //             ? []
-    //             : errors[index]?.item?.map((error) => error.$message) || [],
-    //         amount: !ingredient.dirty.amount
-    //             ? []
-    //             : errors[index]?.amount?.map((error) => error.$message) || [],
-    //         }));
-    //     }
-    // );
 
     const nutrientSourceGroups = {
         proteinSources: proteinSources,
@@ -273,36 +284,73 @@
 
         ingredient.measurement = newMeasurement;
     };
+
+    const canSaveDraft = computed(() => {
+        return v$.value.$anyDirty && v$.value.$errors.length === 0;
+    });
+
+    const saveRecipeDraft = () => {
+        const draftRecipeData = JSON.stringify(addNewRecipeForm);
+        localStorage.setItem(RECIPE_DRAFT_KEY, draftRecipeData);
+    
+        snackbar.add({
+            'type': 'success',
+            'text': 'Draft has been saved successfully!',
+            'dismissible': true,
+            'duration': 5000
+        });
+    };
+
+    const fetchRecipeDrafts = () => {
+        const savedRecipeDraftData = localStorage.getItem(RECIPE_DRAFT_KEY);
+        if(!savedRecipeDraftData) return;
+        const parsedRecipeDraftData = JSON.parse(savedRecipeDraftData);
+        Object.assign(addNewRecipeForm, parsedRecipeDraftData);
+    };
+
+    const submitNewRecipe = async () => {
+        const isFormValid = await v$.value.$validate();
+        if(!isFormValid) return;
+        saveRecipeDraft();
+    };
 </script>
 <template>
   <div class="w-100 pa-4 pt-10">
-    <ReusableForm title="Add a new recipe" button-text="Add new recipe">
+    <ReusableForm title="Add a new recipe" button-colour="primary" button-text="Add new recipe" @submit="submitNewRecipe">
       <template #form-content>
         <v-text-field
-          v-model="addNewRecipeForm.title"
-          :class="[getErrorAnimationClass(v$.title)]"
-          :error="v$.title.$error"
-          :error-messages="validationErrors.title"
-          label="Title"
-          class="mb-4"
-          prepend-inner-icon="mdi-format-title"
-          density="comfortable"
-          variant="outlined"
-          clearable
-          @blur="v$.title.$touch()"
-          hide-details="auto"
+            v-model="addNewRecipeForm.title"
+            :class="[getErrorAnimationClass(v$.title)]"
+            :error="v$.title.$error"
+            :error-messages="validationErrors.title"
+            label="Title"
+            class="mb-4"
+            prepend-inner-icon="mdi-format-title"
+            density="comfortable"
+            variant="outlined"
+            clearable
+            @blur="v$.title.$touch()"
+            hide-details="auto"
         />
         <v-text-field
             v-model="addNewRecipeForm.calories"
             :class="[getErrorAnimationClass(v$.calories)]"
+            :error="v$.calories.$error"
+            :error-messages="validationErrors.calories"
+            class="mb-4"
             label="Calories"
             prepend-inner-icon="mdi-fire-circle"
             type="number"
             density="comfortable"
-            variant="outlined"/>
+            variant="outlined"
+            clearable
+            @blur="v$.calories.$touch()"
+            hide-details="auto"/>
         <v-select
             v-model="addNewRecipeForm.mealPeriods"
             label="Meal Period"
+            :error="v$.mealPeriods.$error"
+            :error-messages="validationErrors.mealPeriods"
             :items="mealPeriods"
             class="mb-4"
             prepend-inner-icon="mdi-clock-time-eight-outline"
@@ -311,7 +359,8 @@
             multiple
             chips
             clearable
-            hide-details="auto">
+            hide-details="auto"
+            @blur="v$.mealPeriods.$touch()">
         </v-select>
         <v-expansion-panels class="mb-4">
             <v-expansion-panel>
@@ -503,7 +552,7 @@
                     </v-select>
                     <v-select
                         class="mb-3"
-                        label="Sources of Magnesium Sources"
+                        label="Sources of Magnesium"
                         v-model="addNewRecipeForm.nutrientSources.magnesiumSources"
                         :items="magnesiumSources"
                         item-title="title"
@@ -518,7 +567,7 @@
                     </v-select>
                     <v-select
                         class="mb-3"
-                        label="Sources of Carbohydrate Sources"
+                        label="Sources of Carbohydrates"
                         v-model="addNewRecipeForm.nutrientSources.carbohydrateSources"
                         :items="carbohydrateSources"
                         item-title="title"
@@ -547,9 +596,7 @@
                     >
                     </v-select>
                 </div>
-                <div
-                class="micronutrient-sources-fieldset d-flex flex-column pa-4 mb-4"
-                >
+                <div class="micronutrient-sources-fieldset d-flex flex-column pa-4 mb-4">
                     <p class="text-subtitle-1 font-weight-bold mb-3">Micronutrients</p>
                     <v-select
                         class="mb-3"
@@ -674,6 +721,13 @@
                 </v-expansion-panel-text>
             </v-expansion-panel>
         </v-expansion-panels>
+        <v-btn
+            color="secondary"
+            prepend-icon="mdi-content-save"
+            rounded="pill"
+            variant="tonal"
+            :disabled="!canSaveDraft"
+            @click="saveRecipeDraft">Save draft</v-btn>
       </template>
     </ReusableForm>
   </div>
