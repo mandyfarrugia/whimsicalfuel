@@ -11,7 +11,7 @@
         max-width="100%"
         class="d-flex flex-column align-center text-center overflow-hidden"
         elevation="2">
-        <VideoPlaceholder :video-url="recipe.videoUrl"/>
+        <VideoPlaceholder :recipe="recipe"/>
         <div class="pa-4">
             <h2 class="text-h6 mt-5 mb-4 font-weight-bold">{{ recipe.title }}</h2>
         </div>

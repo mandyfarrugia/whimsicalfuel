@@ -1,8 +1,19 @@
 <script setup>
-    import { reactive, ref, computed, watch } from 'vue';
+    import { reactive, ref, computed, watch, onMounted, onUnmounted } from 'vue';
     import DataRefinement from '../../components/user-interface/wrappers/DataRefinement.vue';
     import RecipeCard from '../../components/user-interface/cards/RecipeCard.vue';
     import StateMessageCard from '../../components/user-interface/cards/StateMessageCard.vue';
+    import { useRecipesPiniaStore } from '../../stores/recipesPiniaStore.js';
+
+    const recipesPiniaStore = useRecipesPiniaStore();
+
+    onMounted(() => {
+        recipesPiniaStore.fetchRecipes();
+    });
+
+    onUnmounted(() => {
+        recipesPiniaStore.stopFetchingRecipes();
+    });
 
     const searchQuery = ref(null);
     const selectedFoodCategory = ref(null);
@@ -116,7 +127,7 @@
     ]);
 
     const refinedRecipes = computed(() => {
-        let resultSet = [...recipes];
+        let resultSet = [...recipesPiniaStore.recipes];
 
         if(searchQuery.value) {
             resultSet = resultSet.filter(recipe => recipe.title.toLocaleLowerCase().includes(searchQuery.value.toLocaleLowerCase()))

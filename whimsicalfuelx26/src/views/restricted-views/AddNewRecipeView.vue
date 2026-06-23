@@ -1,5 +1,5 @@
 <script setup>
-    import { computed, normalizeClass, reactive, onMounted } from "vue";
+    import { ref, computed, normalizeClass, reactive, onMounted } from "vue";
     import { useAnimationHelper } from '../../composables/useAnimationHelper.js';
     import ReusableForm from "../../components/user-interface/forms/ReusableForm.vue";
     import OrDivider from "../../components/user-interface/dividers/OrDivider.vue";
@@ -20,8 +20,13 @@
     } from "../../data/nutrientSources.js";
     import { mealPeriods } from "../../data/mealPeriods.js";
     import { useSnackbar } from "vue3-snackbar";
+    import { useCustomFileUploadValidation } from "../../composables/useCustomFileUploadValidation.js";
+    import { useCustomLinkValidator } from "../../composables/useCustomLinkValidator.js";
+    import { convertYouTubeLinkToEmbedLink } from "../../services/linkToEmbedConversion.js";
+    import { useRecipesPiniaStore } from "../../stores/recipesPiniaStore.js";
 
     const snackbar = useSnackbar();
+    const lastSavedDraftSnapshot = ref('');
 
     const RECIPE_DRAFT_KEY = '887e86259b2fbe4be65c9fd2fa7014f900408948';
 
@@ -30,6 +35,9 @@
     });
 
     const { getErrorAnimationClass } = useAnimationHelper();
+    const { isFileUploadSizeValid } = useCustomFileUploadValidation();
+    const { isValidUrl, isValidVideoLink } = useCustomLinkValidator();
+    const recipesPiniaStore = useRecipesPiniaStore();
 
     const measurements = [
         {
@@ -118,6 +126,9 @@
         recipe: [
             {
                 instruction: '',
+                dirty: {
+                    instruction: false
+                }
             },
         ],
         nutrientSources: {
@@ -136,7 +147,8 @@
         attachments: {
             link: '',
             video: null
-        }
+        },
+        additionalRemarks: ''
     });
 
     const validationRules = computed(() => ({
@@ -163,6 +175,22 @@
                 },
             })
         },
+        recipe: {
+            $each: helpers.forEach({
+                instruction: {
+                    required: helpers.withMessage("Instruction is required!", required)
+                }
+            })
+        },
+        attachments: {
+            link: {
+                isValidUrl,
+                isValidVideoLink
+            },
+            video: {
+                isFileUploadSizeValid: isFileUploadSizeValid(25)
+            }
+        }
     }));
 
     const v$ = useVuelidate(validationRules, addNewRecipeForm);
@@ -176,7 +204,15 @@
             : v$.value.calories.$errors.map((error) => error.$message),
         mealPeriods: !v$.value.mealPeriods.$dirty
             ? []
-            : v$.value.mealPeriods.$errors.map((error) => error.$message)
+            : v$.value.mealPeriods.$errors.map((error) => error.$message),
+        attachments: {
+            link: !v$.value.attachments.link.$dirty
+                ? []
+                : v$.value.attachments.link.$errors.map((error) => error.$message),
+            video: !v$.value.attachments.video.$dirty
+                ? []
+                : v$.value.attachments.video.$errors.map((error) => error.$message)
+        }
     }));
 
     const nutrientSourceGroups = {
@@ -226,11 +262,19 @@
 
     const getIngredientErrorMessages = (index, fieldName) => {
         const ingredient = addNewRecipeForm.ingredients[index];
-        if(!ingredient || !ingredient.dirty[fieldName]) return [];
+        if(!ingredient || !ingredient.dirty || !ingredient.dirty[fieldName]) return [];
         const fieldErrors = v$.value.ingredients.$each.$response.$errors[index]?.[fieldName];
         if(!fieldErrors) return [];
         return fieldErrors.map((error) => error.$message);
     };
+
+    const getInstructionErrorMessages = (index, fieldName) => {
+        const recipe = addNewRecipeForm.recipe[index];
+        if(!recipe || !recipe.dirty || !recipe.dirty[fieldName]) return [];
+        const fieldErrors = v$.value.recipe.$each.$response.$errors[index]?.[fieldName];
+        if(!fieldErrors) return [];
+        return fieldErrors.map((error) => error.$message);
+    }
 
     const addIngredient = () => {
         addNewRecipeForm.ingredients.push({
@@ -252,6 +296,12 @@
         ingredient.dirty[inputElementName] = true;
     };
 
+    const markInstructionFieldAsDirty = (index, inputElementName) => {
+        const recipe = addNewRecipeForm.recipe[index];
+        if (!recipe || !recipe.dirty) return;
+        recipe.dirty[inputElementName] = true;
+    };
+
     const removeIngredient = (index) => {
         addNewRecipeForm.ingredients.splice(index, 1);
     };
@@ -259,6 +309,9 @@
     const addRecipe = () => {
         addNewRecipeForm.recipe.push({
             instruction: '',
+            dirty: {
+                instruction: false
+            }
         });
     };
 
@@ -285,13 +338,29 @@
         ingredient.measurement = newMeasurement;
     };
 
+    const getDraftDataForTemporaryStorage = () => {
+        return {
+            ...addNewRecipeForm,
+            attachments: {
+                ...addNewRecipeForm.attachments,
+                video: null
+            }
+        }
+    };
+
+    const getDraftDataSnapshot = () => {
+        return JSON.stringify(getDraftDataForTemporaryStorage());
+    }
+
     const canSaveDraft = computed(() => {
-        return v$.value.$anyDirty && v$.value.$errors.length === 0;
+        const hasChangesSinceLastSave = getDraftDataSnapshot() !== lastSavedDraftSnapshot.value;
+        return hasChangesSinceLastSave && v$.value.$errors.length === 0;
     });
 
     const saveRecipeDraft = () => {
-        const draftRecipeData = JSON.stringify(addNewRecipeForm);
+        const draftRecipeData = getDraftDataSnapshot();
         localStorage.setItem(RECIPE_DRAFT_KEY, draftRecipeData);
+        lastSavedDraftSnapshot.value = draftRecipeData;
     
         snackbar.add({
             'type': 'success',
@@ -303,20 +372,106 @@
 
     const fetchRecipeDrafts = () => {
         const savedRecipeDraftData = localStorage.getItem(RECIPE_DRAFT_KEY);
-        if(!savedRecipeDraftData) return;
+        
+        if(!savedRecipeDraftData) {
+            lastSavedDraftSnapshot.value = getDraftDataSnapshot();
+            return;
+        }
+
         const parsedRecipeDraftData = JSON.parse(savedRecipeDraftData);
         Object.assign(addNewRecipeForm, parsedRecipeDraftData);
+
+        addNewRecipeForm.ingredients = addNewRecipeForm.ingredients.map((ingredient) => ({
+            item: ingredient.item || '',
+            amount: ingredient.amount || '',
+            measurement: ingredient.measurement || null,
+            measurementConversionError: ingredient.measurementConversionError || '',
+            dirty: {
+                item: false,
+                amount: false,
+                measurement: false
+            }
+        }));
+
+        addNewRecipeForm.recipe = addNewRecipeForm.recipe.map((step) => ({
+            instruction: step.instruction || '',
+            dirty: {
+                instruction: false
+            }
+        }));
+
+        lastSavedDraftSnapshot.value = getDraftDataSnapshot();
+    };
+
+    const hasInsertedEmbedLink = computed(() => {
+        return (addNewRecipeForm.attachments.link || '').trim().length > 0;
+    });
+
+    const hasUploadedVideo = computed(() => {
+        const video = addNewRecipeForm.attachments.video;
+        if(!video) return false;
+        if(Array.isArray(video)) return video.length > 0;
+        return true;
+    });
+
+    const clearUploadedVideo = () => {
+        addNewRecipeForm.attachments.video = null;
+    };
+
+    const clearVideoLink = () => {
+        addNewRecipeForm.attachments.link = '';
     };
 
     const submitNewRecipe = async () => {
         const isFormValid = await v$.value.$validate();
         if(!isFormValid) return;
-        saveRecipeDraft();
+
+        if(!hasInsertedEmbedLink.value && !hasUploadedVideo.value) {
+            snackbar.add({
+                'type': 'error',
+                'text': 'Please insert either a YouTube link or upload a video',
+                'dismissible': true,
+                'duration': 5000
+            });
+
+            return;
+        }
+
+        try {
+            const videoEmbedLink = convertYouTubeLinkToEmbedLink(addNewRecipeForm.attachments.link);
+            const videoFile = Array.isArray(addNewRecipeForm.attachments.video) ? addNewRecipeForm.attachments.video[0] : addNewRecipeForm.attachments.video;
+            
+            const recipeToSave = {
+                title: addNewRecipeForm.title,
+                calories: Number(addNewRecipeForm.calories),
+                mealPeriods: addNewRecipeForm.mealPeriods || [],
+                ingredients: addNewRecipeForm.ingredients.map((ingredient) => ({
+                    item: ingredient.item,
+                    amount: Number(ingredient.amount),
+                    measurement: ingredient.measurement || null
+                })),
+                recipe: addNewRecipeForm.recipe.map((step) => ({
+                    instruction: step.instruction
+                })),
+                nutrientSources: addNewRecipeForm.nutrientSources,
+                attachments: {
+                    videoSourceType: videoEmbedLink ? 'link' : videoFile ? 'upload' : null,
+                    videoLink: videoEmbedLink || null,
+                    uploadedVideoFile: videoFile || null
+                },
+                additionalRemarks: addNewRecipeForm.additionalRemarks || null
+            };
+
+            await recipesPiniaStore.addNewRecipe(recipeToSave);
+            localStorage.removeItem(RECIPE_DRAFT_KEY);
+        } catch(error) {
+            console.error(error);
+        }
     };
 </script>
 <template>
   <div class="w-100 pa-4 pt-10">
-    <ReusableForm title="Add a new recipe" button-colour="primary" button-text="Add new recipe" @submit="submitNewRecipe">
+    <ReusableForm title="Add a new recipe" button-colour="primary" button-text="Add new recipe" :disabled-based-on="v$.$invalid" @submit="submitNewRecipe">
       <template #form-content>
         <v-text-field
             v-model="addNewRecipeForm.title"
@@ -430,7 +585,7 @@
                                 :items="measurementOptions"
                                 item-title="title"
                                 item-value="value"
-                                label="Measurement"
+                                label="Measurement (Optional)"
                                 density="comfortable"
                                 prepend-inner-icon="mdi-scale"
                                 variant="outlined"
@@ -477,10 +632,12 @@
                             >
                             <v-text-field
                                 v-model="step.instruction"
+                                :error-messages="getInstructionErrorMessages(index, 'instruction')"
                                 label="Item"
                                 density="comfortable"
                                 variant="outlined"
                                 hide-details="auto"
+                                @blur="markInstructionFieldAsDirty(index, 'instruction')"
                             ></v-text-field>
                             </v-col>
                             <v-col
@@ -696,14 +853,21 @@
                 <v-expansion-panel-title class="text-subtitle-1 font-weight-bold"><v-icon class="mx-3" icon="mdi-paperclip"></v-icon> Attachments</v-expansion-panel-title>
                 <v-expansion-panel-text>
                     <div class="attachments-fieldset d-flex flex-column pa-4 mb-4">
-                        <v-icon icon="mdi-link"></v-icon>
+                        <v-icon icon="mdi-youtube"></v-icon>
                         <p class="text-subtitle-1 font-weight-bold mb-3">Link</p>
                         <v-text-field
                             v-model="addNewRecipeForm.attachments.link"
-                            label="Link to Video"
+                            class="mb-3"
+                            label="Link to YouTube Video"
                             density="comfortable"
                             variant="outlined"
-                            clearable/>
+                            clearable
+                            :disabled="hasUploadedVideo"
+                            @click:clear="clearVideoLink"
+                            :error="v$.attachments.link.$error"
+                            :error-messages="validationErrors.attachments.link"
+                            @blur="v$.attachments.link.$touch()"
+                            hide-details="auto"/>
                     </div>
                     <OrDivider></OrDivider>
                     <div class="attachments-fieldset d-flex flex-column pa-4 mb-4">
@@ -712,22 +876,41 @@
                         <v-file-upload
                             v-model="addNewRecipeForm.attachments.video"
                             title="Drag and drop a recipe video here (Optional)"
+                            class="mb-3"
                             divider-text="or"
                             browse-text="Browse Files"
                             accept="video/*"
                             density="default"
-                            clearable/>
+                            clearable
+                            :disabled="hasInsertedEmbedLink"
+                            @click:clear="clearUploadedVideo"
+                            :error="v$.attachments.video.$error"
+                            :error-messages="validationErrors.attachments.video"
+                            @update:model-value="v$.attachments.video.$touch()"
+                            hide-details="auto"/>
                     </div>
                 </v-expansion-panel-text>
             </v-expansion-panel>
         </v-expansion-panels>
+        <v-textarea
+            v-model="addNewRecipeForm.additionalRemarks"
+            label="Any additional remarks?"
+            class="mb-3"
+            prepend-inner-icon="mdi-comment-text-multiple-outline"
+            density="comfortable"
+            variant="outlined"
+            clearable
+            hide-details="auto"
+            auto-grow>
+        </v-textarea>
         <v-btn
             color="secondary"
             prepend-icon="mdi-content-save"
             rounded="pill"
             variant="tonal"
             :disabled="!canSaveDraft"
-            @click="saveRecipeDraft">Save draft</v-btn>
+            @click="saveRecipeDraft">Save draft
+        </v-btn>
       </template>
     </ReusableForm>
   </div>

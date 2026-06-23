@@ -35,6 +35,7 @@
       <router-view></router-view>
       <vue3-snackbar
         bottom end
+        dense
         shadow
         success="#5C8A5C"
         error="#C65B4B"

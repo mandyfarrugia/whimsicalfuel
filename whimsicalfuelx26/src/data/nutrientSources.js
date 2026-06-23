@@ -4,6 +4,7 @@ const proteinSources = [
     value: 'Chicken',
     aliases: [
       'chicken breast',
+      'chicken breast mince',
       'chicken thigh',
       'chicken fillet',
       'chicken pieces',
@@ -57,6 +58,25 @@ const proteinSources = [
       'boiled egg',
       'scrambled eggs',
     ],
+  },
+  {
+    title: 'Ham 🍖',
+    value: 'Ham',
+    aliases: [
+      'sliced ham',
+      'ham slices',
+      'cooked ham',
+      'smoked ham',
+      'lean ham',
+      'pork ham',
+      'gammon',
+      'prosciutto',
+      'parma ham',
+      'serrano ham',
+      'bacon ham',
+      'deli ham',
+      'sandwich ham'
+    ]
   },
   {
     title: 'Tuna 🐟',
