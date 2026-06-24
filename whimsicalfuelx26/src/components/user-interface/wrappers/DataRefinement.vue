@@ -2,7 +2,10 @@
     import { ref } from 'vue';
     import SearchField from '../filters/SearchField.vue';
     import FilterByCriteria from '../filters/FilterByCriteria.vue';
-    import OrderByCriteria from '../filters/OrderByCriteria.vue';   
+    import OrderByCriteria from '../filters/OrderByCriteria.vue';
+    import { foodCategories } from '../../../data/foodCategories.js';
+    import { mealPeriods } from '../../../data/mealPeriods.js';
+    import { sortingOptions } from '../../../data/sortingOptions.js';
 
     defineProps({
         searchQuery: String,
@@ -11,19 +14,6 @@
         selectedProteinType: String,
         selectedSortingOption: String
     });
-
-    const foodCategories = [
-        { title: 'Pizza 🍕', value: 'Pizza' },
-        { title: 'Pasta 🍝', value: 'Pasta' },
-        { title: 'Desserts 🍰', value: 'Desserts' },
-        { title: 'Wraps 🌯', value: 'Wraps' },
-        { title: 'Pies 🥧', value: 'Pies' },
-        { title: 'Burgers 🍔', value: 'Burgers' },
-        { title: 'Patties 🧆', value: 'Patties' },
-        { title: 'Main Dish 🍽️', value: 'Main Dish' },
-        { title: 'Sushi 🍣', value: 'Sushi' },
-        { title: 'Seafood 🦞', value: 'Seafood' }
-    ];
 
     const sortedFoodCategories = [...foodCategories].sort((firstCategory, secondCategory) => firstCategory.title.localeCompare(secondCategory.title));
 
@@ -35,18 +25,6 @@
         { title: 'Tuna 🐟', value: 'Tuna' },
         { title: 'Turkey 🦃', value: 'Turkey' },
         { title: 'Plant-Based 🌱', value: 'Plant-Based' }
-    ];
-
-    const mealPeriods = [
-        { title: 'Breakfast 🍳', value: 'Breakfast' },
-        { title: 'Lunch 🥗', value: 'Lunch' },
-        { title: 'Dinner 🍽️', value: 'Dinner' },
-        { title: 'Snack 🍎', value: 'Snack' }
-    ];
-
-    const sortingOptions = [
-        { title: 'Recipe ⬆️', value: 'recipe-ascending' },
-        { title: 'Recipe ⬇️', value: 'recipe-descending' }
     ];
 
     const emit = defineEmits([

@@ -117,6 +117,7 @@
                 amount: '',
                 measurement: null,
                 measurementConversionError: '',
+                additionalRemarks: '',
                 dirty: {
                     item: false,
                     amount: false,
@@ -296,6 +297,7 @@
             amount: '',
             measurement: null,
             measurementConversionError: '',
+            additionalRemarks: '',
             dirty: {
                 item: false,
                 amount: false,
@@ -400,6 +402,7 @@
             amount: ingredient.amount || '',
             measurement: ingredient.measurement || null,
             measurementConversionError: ingredient.measurementConversionError || '',
+            additionalRemarks: ingredient.additionalRemarks || '',
             dirty: {
                 item: false,
                 amount: false,
@@ -463,7 +466,8 @@
                 ingredients: addNewRecipeForm.ingredients.map((ingredient) => ({
                     item: ingredient.item,
                     amount: Number(ingredient.amount),
-                    measurement: ingredient.measurement || null
+                    measurement: ingredient.measurement || null,
+                    additionalRemarks: ingredient.additionalRemarks || null
                 })),
                 recipe: addNewRecipeForm.recipe.map((step) => ({
                     instruction: step.instruction
@@ -624,6 +628,16 @@
                             ></v-select>
                             </v-col>
                         </v-row>
+                        <v-row>
+                            <v-textarea
+                                v-model="ingredient.additionalRemarks"
+                                label="Additional remarks"
+                                hide-details="auto"
+                                auto-grow
+                                clearable
+                                density="comfortable"
+                                variant="outlined"></v-textarea>
+                        </v-row>
                         <div
                             v-if="addNewRecipeForm.ingredients.length > 1"
                             class="d-flex justify-end mt-4"
@@ -659,15 +673,17 @@
                             <v-col
                             :cols="index === addNewRecipeForm.recipe.length - 1 ? 10 : 12"
                             >
-                            <v-text-field
+                            <v-textarea
                                 v-model="step.instruction"
                                 :error-messages="getInstructionErrorMessages(index, 'instruction')"
-                                label="Item"
+                                label="Instruction"
                                 density="comfortable"
                                 variant="outlined"
                                 hide-details="auto"
                                 @blur="markInstructionFieldAsDirty(index, 'instruction')"
-                            ></v-text-field>
+                                clearable
+                                auto-grow
+                            ></v-textarea>
                             </v-col>
                             <v-col
                             v-if="index === addNewRecipeForm.recipe.length - 1"
