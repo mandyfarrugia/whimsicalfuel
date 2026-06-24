@@ -46,6 +46,7 @@ export const useRecipesPiniaStore = defineStore('recipes', () => {
                 title: payload.title,
                 calories: payload.calories,
                 mealPeriods: payload.mealPeriods,
+                servings: payload.servings,
                 ingredients: payload.ingredients,
                 recipe: payload.recipe,
                 nutrientSources: payload.nutrientSources,

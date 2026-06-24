@@ -110,6 +110,7 @@
         title: '',
         calories: '',
         mealPeriods: null,
+        servings: '',
         ingredients: [
             {
                 item: '',
@@ -162,6 +163,13 @@
                 minValue(0)
             )
         },
+        servings: {
+            required: helpers.withMessage('Servings are required!', required),
+            minValue: helpers.withMessage(
+                ({ $params }) => `Serving must be at least ${$params.min}!`,
+                minValue(1)
+            )
+        },
         mealPeriods: {
             required: helpers.withMessage('At least one meal period is required!', required)
         },
@@ -171,7 +179,10 @@
                     required: helpers.withMessage("Item is required!", required),
                 },
                 amount: {
-                    required: helpers.withMessage("Amount is required!", required),
+                    minValue: helpers.withMessage(
+                        ({ $params }) => `Amount must be at least ${$params.min}!`,
+                        minValue(0)
+                    )
                 },
             })
         },
@@ -205,6 +216,9 @@
         mealPeriods: !v$.value.mealPeriods.$dirty
             ? []
             : v$.value.mealPeriods.$errors.map((error) => error.$message),
+        servings: !v$.value.servings.$dirty
+            ? []
+            : v$.value.servings.$errors.map((error) => error.$message),
         attachments: {
             link: !v$.value.attachments.link.$dirty
                 ? []
@@ -445,6 +459,7 @@
                 title: addNewRecipeForm.title,
                 calories: Number(addNewRecipeForm.calories),
                 mealPeriods: addNewRecipeForm.mealPeriods || [],
+                servings: addNewRecipeForm.servings,
                 ingredients: addNewRecipeForm.ingredients.map((ingredient) => ({
                     item: ingredient.item,
                     amount: Number(ingredient.amount),
@@ -517,6 +532,20 @@
             hide-details="auto"
             @blur="v$.mealPeriods.$touch()">
         </v-select>
+        <v-text-field
+            v-model="addNewRecipeForm.servings"
+            :class="[getErrorAnimationClass(v$.servings)]"
+            :error="v$.servings.$error"
+            :error-messages="validationErrors.servings"
+            class="mb-4"
+            label="Servings"
+            prepend-inner-icon="mdi-account-group"
+            type="number"
+            density="comfortable"
+            variant="outlined"
+            clearable
+            @blur="v$.servings.$touch()"
+            hide-details="auto"/>
         <v-expansion-panels class="mb-4">
             <v-expansion-panel>
                 <v-expansion-panel-title class="text-subtitle-1 font-weight-bold"><v-icon class="mx-3" icon="mdi-food-apple"></v-icon> Ingredients</v-expansion-panel-title>
