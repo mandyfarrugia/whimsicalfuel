@@ -33,7 +33,7 @@
                     type: 'standard',
                     shape: 'pill',
                     text: 'continue_with',
-                    width: 500
+                    width: 280
                 }
             );
 

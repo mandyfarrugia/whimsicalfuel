@@ -7,6 +7,7 @@
     import { required, email, helpers } from '@vuelidate/validators';
     import { useRouter } from 'vue-router';
     import { useAnimationHelper } from '../../composables/useAnimationHelper.js';
+    import OrDivider from '../../components/user-interface/dividers/OrDivider.vue';
 
     const authenticationPiniaStore = useAuthenticationPiniaStore();
     const router = useRouter();
@@ -90,10 +91,10 @@
                 </v-text-field>
             </template>
             <template #actions>
-                <div class="my-3 d-flex align-center">
-                    <v-divider/>
+                <OrDivider></OrDivider>
+                <div class="px-6 pb-6">
+                    <ContinueWithGoogleButton @google-login-id-token="loginWithGoogle"></ContinueWithGoogleButton>
                 </div>
-                <ContinueWithGoogleButton @google-login-id-token="loginWithGoogle"></ContinueWithGoogleButton>
             </template>
         </ReusableForm>
     </div>

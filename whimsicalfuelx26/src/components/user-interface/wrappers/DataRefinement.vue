@@ -3,19 +3,19 @@
     import SearchField from '../filters/SearchField.vue';
     import FilterByCriteria from '../filters/FilterByCriteria.vue';
     import OrderByCriteria from '../filters/OrderByCriteria.vue';
-    import { foodCategories } from '../../../data/foodCategories.js';
+    import { mealTypes } from '../../../data/mealTypes.js';
     import { mealPeriods } from '../../../data/mealPeriods.js';
     import { sortingOptions } from '../../../data/sortingOptions.js';
 
     defineProps({
         searchQuery: String,
-        selectedFoodCategory: String,
+        selectedMealType: String,
         selectedMealPeriod: String,
         selectedProteinType: String,
         selectedSortingOption: String
     });
 
-    const sortedFoodCategories = [...foodCategories].sort((firstCategory, secondCategory) => firstCategory.title.localeCompare(secondCategory.title));
+    const sortedMealTypes = [...mealTypes].sort((firstCategory, secondCategory) => firstCategory.title.localeCompare(secondCategory.title));
 
     const proteinTypes = [
         { title: 'Chicken 🍗', value: 'Chicken' },
@@ -29,7 +29,7 @@
 
     const emit = defineEmits([
         'update:searchQuery',
-        'update:selectedFoodCategory',
+        'update:selectedMealType',
         'update:selectedMealPeriod',
         'update:selectedProteinType',
         'update:selectedSortingOption'
@@ -45,10 +45,10 @@
         </v-col>
         <v-col cols="12" md="4">
             <FilterByCriteria
-                label="Filter by Food Category"
-                @update:model-value="emit('update:selectedFoodCategory', $event)"
-                :model-value="selectedFoodCategory"
-                :filter-options="sortedFoodCategories"/>
+                label="Filter by Meal Type"
+                @update:model-value="emit('update:selectedMealType', $event)"
+                :model-value="selectedMealType"
+                :filter-options="sortedMealTypes"/>
         </v-col>
         <v-col cols="12" md="4">
             <FilterByCriteria

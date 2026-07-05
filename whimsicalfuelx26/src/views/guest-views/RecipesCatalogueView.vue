@@ -1,5 +1,6 @@
 <script setup>
     import { reactive, ref, computed, watch, onMounted, onUnmounted } from 'vue';
+    import { storeToRefs } from 'pinia';
     import DataRefinement from '../../components/user-interface/wrappers/DataRefinement.vue';
     import RecipeCard from '../../components/user-interface/cards/RecipeCard.vue';
     import StateMessageCard from '../../components/user-interface/cards/StateMessageCard.vue';
@@ -7,9 +8,10 @@
     import { matchesSelectedValue } from '../../services/selectionMatchService.js';
 
     const recipesPiniaStore = useRecipesPiniaStore();
+    const { recipes, isRecipesLoading } = storeToRefs(recipesPiniaStore);
 
     onMounted(() => {
-        recipesPiniaStore.fetchRecipes();
+        recipesPiniaStore.fetchApprovedRecipes();
     });
 
     onUnmounted(() => {
@@ -17,13 +19,13 @@
     });
 
     const searchQuery = ref(null);
-    const selectedFoodCategory = ref(null);
+    const selectedMealType = ref(null);
     const selectedSortingOption = ref(null);
     const selectedMealPeriod = ref(null);
     const selectedProteinType = ref(null);
 
     const refinedRecipes = computed(() => {
-        let resultSet = [...recipesPiniaStore.recipes];
+        let resultSet = [...recipes.value];
 
         if(searchQuery.value) {
             resultSet = resultSet.filter((recipe) => {
@@ -33,9 +35,9 @@
             });
         }
 
-        if (selectedFoodCategory.value) {
+        if (selectedMealType.value) {
             resultSet = resultSet.filter((recipe) => {
-                return matchesSelectedValue(recipe.mealTypes, selectedFoodCategory.value);
+                return matchesSelectedValue(recipe.mealTypes, selectedMealType.value);
             });
         }
 
@@ -79,39 +81,61 @@
     });
 
     watch(
-        [searchQuery, selectedFoodCategory, selectedMealPeriod, selectedProteinType, selectedSortingOption],
+        [searchQuery, selectedMealType, selectedMealPeriod, selectedProteinType, selectedSortingOption],
         () => {
             currentPage.value = 1;
         }
-    )
+    );
+
+    const deleteRecipe = async (recipe) => {
+        try {
+            await recipesPiniaStore.deleteRecipe(recipe);
+        } catch (error) {
+            console.error(error);
+        }
+    };
 </script>
 <template>
     <div class="w-100 pa-5 pt-10">
         <h1 class="text-headline-large font-weight-bold text-center mb-6">Recipes</h1>
         <DataRefinement
             v-model:search-query="searchQuery"
-            v-model:selected-food-category="selectedFoodCategory"
+            v-model:selected-meal-type="selectedMealType"
             v-model:selected-meal-period="selectedMealPeriod"
             v-model:selected-protein-type="selectedProteinType"
             v-model:selected-sorting-option="selectedSortingOption"/>
         <div class="d-flex flex-wrap ga-4 justify-center">
-            <RecipeCard v-if="refinedRecipes && refinedRecipes.length > 0"
-                v-for="recipe in paginatedRecipesCatalogue"
-                :recipe="recipe"
-                :key="recipe.id"/>
+            <template v-if="isRecipesLoading">
+                <RecipeCard
+                    v-for="index in 3"
+                    :key="`recipe-skeleton-${index}`"
+                    :recipe="null"
+                    :is-loading="true"
+                />
+            </template>
+            <template v-else-if="refinedRecipes.length > 0">
+                <RecipeCard
+                    v-for="recipe in paginatedRecipesCatalogue"
+                    :key="recipe.id"
+                    :recipe="recipe"
+                    :is-loading="false"
+                    @delete-recipe="deleteRecipe"
+                />
+            </template>
             <StateMessageCard
                 v-else
                 emoji="😟"
                 title="Oh no!"
-                message="Unfortunately, no recipes are available at the moment! Please check back later!"/>
+                message="Unfortunately, no recipes are available at the moment! Please check back later!"
+            />
         </div>
-        <div v-if="totalPages > 0" class="d-flex justify-center mt-6">
+        <div v-if="!isRecipesLoading && totalPages > 0" class="d-flex justify-center mt-6">
             <v-pagination
                 v-model="currentPage"
                 :length="totalPages"
                 rounded="pill"
                 color="primary"/>
         </div>
-        <p v-if="totalPages > 0" class="text-center mt-1">Page {{ currentPage }} of {{ totalPages }}</p>
+        <p v-if="!isRecipesLoading && totalPages > 0" class="text-center mt-1">Page {{ currentPage }} of {{ totalPages }}</p>
     </div>
 </template>

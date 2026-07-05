@@ -11,3 +11,7 @@
   font-size: clamp(1.8rem, 5vw, 2.25rem);
   line-height: 1;
 }
+
+.pending-recipes-page {
+    max-width: 1100px;
+}

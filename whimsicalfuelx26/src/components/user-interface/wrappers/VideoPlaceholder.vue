@@ -4,23 +4,23 @@
     const props = defineProps({
         recipe: {
             type: Object,
-            required: true
+            default: null
         }
     });
 
     const isVideoLoading = ref(true);
-    
+
     const videoSourceType = computed(() => {
-        return props.recipe.attachments?.videoSourceType || null;
-    })
+        return props.recipe?.attachments?.videoSourceType || null;
+    });
 
     const videoUrl = computed(() => {
-        if(videoSourceType.value === 'link') {
-            return props.recipe.attachments?.videoLink || '';
+        if (videoSourceType.value === 'link') {
+            return props.recipe?.attachments?.videoLink || '';
         }
 
-        if(videoSourceType.value === 'upload') {
-            return props.recipe.attachments?.uploadedVideoUrl || '';
+        if (videoSourceType.value === 'upload') {
+            return props.recipe?.attachments?.uploadedVideoUrl || '';
         }
 
         return '';
@@ -32,15 +32,23 @@
 
     const onVideoLoaded = () => {
         isVideoLoading.value = false;
-    }
+    };
 
     watch(videoUrl, () => {
         isVideoLoading.value = true;
     });
 </script>
+
 <template>
-    <div class="video-placeholder">
-        <div v-if="isVideoLoading" class="video-skeleton"></div>
+    <div
+        v-if="hasVideo"
+        class="video-placeholder"
+    >
+        <div
+            v-if="isVideoLoading"
+            class="video-skeleton"
+        ></div>
+
         <iframe
             v-if="videoSourceType === 'link'"
             v-show="!isVideoLoading"
@@ -49,8 +57,9 @@
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             referrerpolicy="strict-origin-when-cross-origin"
             allowfullscreen
-            @load="onVideoLoaded">
-        </iframe>
+            @load="onVideoLoaded"
+        ></iframe>
+
         <video
             v-else-if="videoSourceType === 'upload'"
             v-show="!isVideoLoading"
@@ -58,8 +67,15 @@
             :src="videoUrl"
             controls
             preload="metadata"
-            @loadedmetadata="onVideoLoaded">
-        </video>
+            @loadedmetadata="onVideoLoaded"
+        ></video>
+    </div>
+
+    <div
+        v-else
+        class="video-placeholder"
+    >
+        <div class="video-skeleton"></div>
     </div>
 </template>
 <style>

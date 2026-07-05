@@ -1,10 +1,11 @@
-<!-- <script setup>
-    import { ref, computed, normalizeClass, reactive, onMounted } from "vue";
-    import { useAnimationHelper } from '../../composables/useAnimationHelper.js';
-    import ReusableForm from "../../components/user-interface/forms/ReusableForm.vue";
-    import OrDivider from "../../components/user-interface/dividers/OrDivider.vue";
+<script setup>
+    import { ref, computed, reactive, watch } from "vue";
+    import { useAnimationHelper } from  "../../../composables/useAnimationHelper.js";
+    
+    import ReusableForm from "./ReusableForm.vue";
+    import OrDivider from "../dividers/OrDivider.vue";
     import { useVuelidate } from "@vuelidate/core";
-    import { required, email, helpers, minValue } from "@vuelidate/validators";
+    import { required, helpers, minValue } from "@vuelidate/validators";
     import {
         proteinSources,
         calciumSources,
@@ -17,28 +18,50 @@
         vitaminCSources,
         vitaminDSources,
         vitaminKSources,
-    } from "../../data/nutrientSources.js";
-    import { mealPeriods } from "../../data/mealPeriods.js";
+    } from "../../../data/nutrientSources.js";
     import { useSnackbar } from "vue3-snackbar";
-    import { useCustomFileUploadValidation } from "../../composables/useCustomFileUploadValidation.js";
-    import { useCustomLinkValidator } from "../../composables/useCustomLinkValidator.js";
-    import { convertYouTubeLinkToEmbedLink } from "../../services/linkToEmbedConversion.js";
-    import { useRecipesPiniaStore } from "../../stores/recipesPiniaStore.js";
-    import { mealTypes } from "../../data/mealTypes.js";
+    import { mealPeriods } from "../../../data/mealPeriods.js";
+    import { useCustomFileUploadValidation } from "../../../composables/useCustomFileUploadValidation.js";
+    import { useCustomLinkValidator } from "../../../composables/useCustomLinkValidator.js";
+    import { convertYouTubeLinkToEmbedLink } from "../../../services/linkToEmbedConversion.js";
+    import { mealTypes } from "../../../data/mealTypes.js";
+
+    const props = defineProps({
+        title: {
+            type: String,
+            required: true
+        },
+        buttonText: {
+            type: String,
+            required: true
+        },
+        buttonColour: {
+            type: String,
+            default: 'primary'
+        },
+        initialRecipe: {
+            type: Object,
+            default: null
+        },
+        enableDraft: {
+            type: Boolean,
+            default: true
+        },
+        draftKey: {
+            type: String,
+            required: true
+        }
+    });
+
+    const emit = defineEmits(['submit']);
 
     const snackbar = useSnackbar();
-    const lastSavedDraftSnapshot = ref('');
-
-    const RECIPE_DRAFT_KEY = '887e86259b2fbe4be65c9fd2fa7014f900408948';
-
-    onMounted(() => {
-        fetchRecipeDrafts();
-    });
 
     const { getErrorAnimationClass } = useAnimationHelper();
     const { isFileUploadSizeValid } = useCustomFileUploadValidation();
     const { isValidUrl, isValidVideoLink } = useCustomLinkValidator();
-    const recipesPiniaStore = useRecipesPiniaStore();
+
+    const lastSavedDraftSnapshot = ref('');
 
     const measurements = [
         {
@@ -107,7 +130,7 @@
         value: measurement.value,
     }));
 
-    const addNewRecipeForm = reactive({
+    const recipeForm = reactive({
         title: '',
         calories: '',
         mealTypes: null,
@@ -150,7 +173,11 @@
         },
         attachments: {
             link: '',
-            video: null
+            video: null,
+            existingVideoSourceType: null,
+            existingVideoLink: null,
+            existingUploadedVideoUrl: null,
+            existingUploadedVideoPath: null
         },
         additionalRemarks: ''
     });
@@ -210,7 +237,7 @@
         }
     }));
 
-    const v$ = useVuelidate(validationRules, addNewRecipeForm);
+    const v$ = useVuelidate(validationRules, recipeForm);
 
     const validationErrors = computed(() => ({
         title: !v$.value.title.$dirty
@@ -269,7 +296,7 @@
 
         for(const nutrientKey in nutrientSourceGroups) {
             const sourceOptions = nutrientSourceGroups[nutrientKey];
-            const selectedSources = addNewRecipeForm.nutrientSources[nutrientKey];
+            const selectedSources = recipeForm.nutrientSources[nutrientKey];
 
             if(!Array.isArray(selectedSources) || !Array.isArray(sourceOptions)) continue;
             
@@ -284,7 +311,7 @@
     };
 
     const getIngredientErrorMessages = (index, fieldName) => {
-        const ingredient = addNewRecipeForm.ingredients[index];
+        const ingredient = recipeForm.ingredients[index];
         if(!ingredient || !ingredient.dirty || !ingredient.dirty[fieldName]) return [];
         const fieldErrors = v$.value.ingredients.$each.$response.$errors[index]?.[fieldName];
         if(!fieldErrors) return [];
@@ -292,7 +319,7 @@
     };
 
     const getInstructionErrorMessages = (index, fieldName) => {
-        const recipe = addNewRecipeForm.recipe[index];
+        const recipe = recipeForm.recipe[index];
         if(!recipe || !recipe.dirty || !recipe.dirty[fieldName]) return [];
         const fieldErrors = v$.value.recipe.$each.$response.$errors[index]?.[fieldName];
         if(!fieldErrors) return [];
@@ -300,7 +327,7 @@
     }
 
     const addIngredient = () => {
-        addNewRecipeForm.ingredients.push({
+        recipeForm.ingredients.push({
             item: '',
             amount: '',
             measurement: null,
@@ -315,23 +342,23 @@
     };
 
     const markIngredientFieldAsDirty = (index, inputElementName) => {
-        const ingredient = addNewRecipeForm.ingredients[index];
+        const ingredient = recipeForm.ingredients[index];
         if (!ingredient || !ingredient.dirty) return;
         ingredient.dirty[inputElementName] = true;
     };
 
     const markInstructionFieldAsDirty = (index, inputElementName) => {
-        const recipe = addNewRecipeForm.recipe[index];
+        const recipe = recipeForm.recipe[index];
         if (!recipe || !recipe.dirty) return;
         recipe.dirty[inputElementName] = true;
     };
 
     const removeIngredient = (index) => {
-        addNewRecipeForm.ingredients.splice(index, 1);
+        recipeForm.ingredients.splice(index, 1);
     };
 
     const addRecipe = () => {
-        addNewRecipeForm.recipe.push({
+        recipeForm.recipe.push({
             instruction: '',
             dirty: {
                 instruction: false
@@ -340,11 +367,11 @@
     };
 
     const removeStep = (index) => {
-        addNewRecipeForm.recipe.splice(index, 1);
+        recipeForm.recipe.splice(index, 1);
     };
 
     const changeIngredientMeasurement = (index, newMeasurement) => {
-        const ingredient = addNewRecipeForm.ingredients[index];
+        const ingredient = recipeForm.ingredients[index];
         if(!ingredient) return;
         const oldMeasurement = ingredient.measurement;
         ingredient.measurementConversionError = '';
@@ -362,11 +389,15 @@
         ingredient.measurement = newMeasurement;
     };
 
+    const hasInsertedEmbedLink = computed(() => {
+        return (recipeForm.attachments.link || '').trim().length > 0;
+    });
+
     const getDraftDataForTemporaryStorage = () => {
         return {
-            ...addNewRecipeForm,
+            ...recipeForm,
             attachments: {
-                ...addNewRecipeForm.attachments,
+                ...recipeForm.attachments,
                 video: null
             }
         }
@@ -374,16 +405,17 @@
 
     const getDraftDataSnapshot = () => {
         return JSON.stringify(getDraftDataForTemporaryStorage());
-    }
+    };
 
     const canSaveDraft = computed(() => {
+        if(!props.enableDraft) return false;
         const hasChangesSinceLastSave = getDraftDataSnapshot() !== lastSavedDraftSnapshot.value;
         return hasChangesSinceLastSave && v$.value.$errors.length === 0;
     });
 
     const saveRecipeDraft = () => {
         const draftRecipeData = getDraftDataSnapshot();
-        localStorage.setItem(RECIPE_DRAFT_KEY, draftRecipeData);
+        localStorage.setItem(props.draftKey, draftRecipeData);
         lastSavedDraftSnapshot.value = draftRecipeData;
     
         snackbar.add({
@@ -394,18 +426,18 @@
         });
     };
 
-    const fetchRecipeDrafts = () => {
-        const savedRecipeDraftData = localStorage.getItem(RECIPE_DRAFT_KEY);
-        
-        if(!savedRecipeDraftData) {
-            lastSavedDraftSnapshot.value = getDraftDataSnapshot();
+    const populateRecipeForm = (recipe) => {
+        if (!recipe) {
             return;
         }
 
-        const parsedRecipeDraftData = JSON.parse(savedRecipeDraftData);
-        Object.assign(addNewRecipeForm, parsedRecipeDraftData);
+        recipeForm.title = recipe.title || '';
+        recipeForm.calories = recipe.calories || '';
+        recipeForm.servings = recipe.servings || '';
+        recipeForm.mealTypes = recipe.mealTypes || [];
+        recipeForm.mealPeriods = recipe.mealPeriods || [];
 
-        addNewRecipeForm.ingredients = addNewRecipeForm.ingredients.map((ingredient) => ({
+        recipeForm.ingredients = recipe.ingredients?.map((ingredient) => ({
             item: ingredient.item || '',
             amount: ingredient.amount || '',
             measurement: ingredient.measurement || null,
@@ -414,42 +446,111 @@
             dirty: {
                 item: false,
                 amount: false,
-                measurement: false
+                measurement: false,
+            },
+        })) || [
+            {
+                item: '',
+                amount: '',
+                measurement: null,
+                measurementConversionError: '',
+                additionalRemarks: '',
+                dirty: {
+                    item: false,
+                    amount: false,
+                    measurement: false,
+                },
             }
-        }));
+        ];
 
-        addNewRecipeForm.recipe = addNewRecipeForm.recipe.map((step) => ({
+        recipeForm.recipe = recipe.recipe?.map((step) => ({
             instruction: step.instruction || '',
             dirty: {
                 instruction: false
             }
-        }));
+        })) || [
+            {
+                instruction: '',
+                dirty: {
+                    instruction: false
+                }
+            }
+        ];
 
-        lastSavedDraftSnapshot.value = getDraftDataSnapshot();
+        recipeForm.nutrientSources = {
+            proteinSources: recipe.nutrientSources?.proteinSources || [],
+            calciumSources: recipe.nutrientSources?.calciumSources || [],
+            fibreSources: recipe.nutrientSources?.fibreSources || [],
+            healthyFatSources: recipe.nutrientSources?.healthyFatSources || [],
+            magnesiumSources: recipe.nutrientSources?.magnesiumSources || [],
+            carbohydrateSources: recipe.nutrientSources?.carbohydrateSources || [],
+            vitaminASources: recipe.nutrientSources?.vitaminASources || [],
+            vitaminBSources: recipe.nutrientSources?.vitaminBSources || [],
+            vitaminCSources: recipe.nutrientSources?.vitaminCSources || [],
+            vitaminDSources: recipe.nutrientSources?.vitaminDSources || [],
+            vitaminKSources: recipe.nutrientSources?.vitaminKSources || [],
+        };
+
+        recipeForm.attachments.link =
+            recipe.attachments?.videoSourceType === 'link'
+                ? recipe.attachments.videoLink || ''
+                : '';
+
+        recipeForm.attachments.video = null;
+
+        recipeForm.attachments.existingVideoSourceType =
+            recipe.attachments?.videoSourceType || null;
+
+        recipeForm.attachments.existingVideoLink =
+            recipe.attachments?.videoLink || null;
+
+        recipeForm.attachments.existingUploadedVideoUrl =
+            recipe.attachments?.uploadedVideoUrl || null;
+
+        recipeForm.attachments.existingUploadedVideoPath =
+            recipe.attachments?.uploadedVideoPath || null;
+
+        recipeForm.additionalRemarks = recipe.additionalRemarks || '';
     };
 
-    const hasInsertedEmbedLink = computed(() => {
-        return (addNewRecipeForm.attachments.link || '').trim().length > 0;
-    });
+    watch(
+        () => props.initialRecipe,
+        (recipe) => {
+            populateRecipeForm(recipe);
+
+            const savedRecipeDraftData = localStorage.getItem(props.draftKey);
+
+            if (props.enableDraft && savedRecipeDraftData) {
+                const parsedRecipeDraftData = JSON.parse(savedRecipeDraftData);
+                populateRecipeForm(parsedRecipeDraftData);
+            }
+
+            lastSavedDraftSnapshot.value = getDraftDataSnapshot();
+        },
+        { immediate: true }
+    );
 
     const hasUploadedVideo = computed(() => {
-        const video = addNewRecipeForm.attachments.video;
+        const video = recipeForm.attachments.video;
         if(!video) return false;
         if(Array.isArray(video)) return video.length > 0;
         return true;
     });
 
     const clearUploadedVideo = () => {
-        addNewRecipeForm.attachments.video = null;
+        recipeForm.attachments.video = null;
     };
 
     const clearVideoLink = () => {
-        addNewRecipeForm.attachments.link = '';
+        recipeForm.attachments.link = '';
     };
 
-    const submitNewRecipe = async () => {
+    const submitRecipeForm = async () => {
         const isFormValid = await v$.value.$validate();
-        if(!isFormValid) return;
+
+        if (!isFormValid) {
+            return;
+        }
 
         if(!hasInsertedEmbedLink.value && !hasUploadedVideo.value) {
             snackbar.add({
@@ -462,47 +563,61 @@
             return;
         }
 
-        try {
-            const videoEmbedLink = convertYouTubeLinkToEmbedLink(addNewRecipeForm.attachments.link);
-            const videoFile = Array.isArray(addNewRecipeForm.attachments.video) ? addNewRecipeForm.attachments.video[0] : addNewRecipeForm.attachments.video;
-            
-            const recipeToSave = {
-                title: addNewRecipeForm.title,
-                calories: Number(addNewRecipeForm.calories),
-                servings: Number(addNewRecipeForm.servings),
-                mealTypes: addNewRecipeForm.mealTypes || [],
-                mealPeriods: addNewRecipeForm.mealPeriods || [],
-                ingredients: addNewRecipeForm.ingredients.map((ingredient) => ({
-                    item: ingredient.item,
-                    amount: Number(ingredient.amount),
-                    measurement: ingredient.measurement || null,
-                    additionalRemarks: ingredient.additionalRemarks || null
-                })),
-                recipe: addNewRecipeForm.recipe.map((step) => ({
-                    instruction: step.instruction
-                })),
-                nutrientSources: addNewRecipeForm.nutrientSources,
-                attachments: {
-                    videoSourceType: videoEmbedLink ? 'link' : videoFile ? 'upload' : null,
-                    videoLink: videoEmbedLink || null,
-                    uploadedVideoFile: videoFile || null
-                },
-                additionalRemarks: addNewRecipeForm.additionalRemarks || null
-            };
+        const videoEmbedLink = convertYouTubeLinkToEmbedLink(recipeForm.attachments.link);
 
-            await recipesPiniaStore.addNewRecipe(recipeToSave);
-            localStorage.removeItem(RECIPE_DRAFT_KEY);
-        } catch(error) {
-            console.error(error);
-        }
+        const videoFile = Array.isArray(recipeForm.attachments.video)
+            ? recipeForm.attachments.video[0]
+            : recipeForm.attachments.video;
+
+        const recipeToSave = {
+            title: recipeForm.title,
+            calories: Number(recipeForm.calories),
+            servings: Number(recipeForm.servings),
+            mealTypes: recipeForm.mealTypes || [],
+            mealPeriods: recipeForm.mealPeriods || [],
+            ingredients: recipeForm.ingredients.map((ingredient) => ({
+                item: ingredient.item,
+                amount: Number(ingredient.amount),
+                measurement: ingredient.measurement || null,
+                additionalRemarks: ingredient.additionalRemarks || null
+            })),
+            recipe: recipeForm.recipe.map((step) => ({
+                instruction: step.instruction
+            })),
+            nutrientSources: recipeForm.nutrientSources,
+            attachments: {
+                videoSourceType: videoEmbedLink
+                    ? 'link'
+                    : videoFile
+                        ? 'upload'
+                        : recipeForm.attachments.existingVideoSourceType,
+                videoLink: videoEmbedLink || null,
+                uploadedVideoFile: videoFile || null,
+                existingVideoSourceType: recipeForm.attachments.existingVideoSourceType || null,
+                existingVideoLink: recipeForm.attachments.existingVideoLink || null,
+                existingUploadedVideoUrl: recipeForm.attachments.existingUploadedVideoUrl || null,
+                existingUploadedVideoPath: recipeForm.attachments.existingUploadedVideoPath || null
+            },
+            additionalRemarks: recipeForm.additionalRemarks || null
+        };
+
+        emit('submit', recipeToSave);
+        localStorage.removeItem(props.draftKey);
+        lastSavedDraftSnapshot.value = getDraftDataSnapshot();
     };
 </script>
 <template>
   <div class="w-100 pa-4 pt-10">
-    <ReusableForm title="Add a new recipe" button-colour="primary" button-text="Add new recipe" :disabled-based-on="v$.$invalid" @submit="submitNewRecipe">
+    <ReusableForm
+        :title="props.title"
+        :button-colour="props.buttonColour"
+        :button-text="props.buttonText"
+        :disabled-based-on="v$.$invalid"
+        @submit="submitRecipeForm"
+    >
       <template #form-content>
         <v-text-field
-            v-model="addNewRecipeForm.title"
+            v-model="recipeForm.title"
             :class="[getErrorAnimationClass(v$.title)]"
             :error="v$.title.$error"
             :error-messages="validationErrors.title"
@@ -516,7 +631,7 @@
             hide-details="auto"
         />
         <v-text-field
-            v-model="addNewRecipeForm.calories"
+            v-model="recipeForm.calories"
             :class="[getErrorAnimationClass(v$.calories)]"
             :error="v$.calories.$error"
             :error-messages="validationErrors.calories"
@@ -530,7 +645,7 @@
             @blur="v$.calories.$touch()"
             hide-details="auto"/>
         <v-text-field
-            v-model="addNewRecipeForm.servings"
+            v-model="recipeForm.servings"
             :class="[getErrorAnimationClass(v$.servings)]"
             :error="v$.servings.$error"
             :error-messages="validationErrors.servings"
@@ -544,7 +659,7 @@
             @blur="v$.servings.$touch()"
             hide-details="auto"/>
         <v-select
-            v-model="addNewRecipeForm.mealTypes"
+            v-model="recipeForm.mealTypes"
             label="Food Category"
             :error="v$.mealTypes.$error"
             :error-messages="validationErrors.mealTypes"
@@ -562,7 +677,7 @@
             @blur="v$.mealTypes.$touch()"
         />
         <v-select
-            v-model="addNewRecipeForm.mealPeriods"
+            v-model="recipeForm.mealPeriods"
             label="Meal Period"
             :error="v$.mealPeriods.$error"
             :error-messages="validationErrors.mealPeriods"
@@ -582,7 +697,7 @@
                 <v-expansion-panel-title class="text-subtitle-1 font-weight-bold"><v-icon class="mx-3" icon="mdi-food-apple"></v-icon> Ingredients</v-expansion-panel-title>
                 <v-expansion-panel-text>
                     <div
-                        v-for="(ingredient, index) in addNewRecipeForm.ingredients"
+                        v-for="(ingredient, index) in recipeForm.ingredients"
                         class="ingredient-fieldset d-flex flex-column pa-4 mb-4"
                         :key="index"
                         >
@@ -592,12 +707,12 @@
                         <v-row
                             align="center"
                             :class="{
-                            'mb-2': index !== addNewRecipeForm.ingredients.length - 1
+                            'mb-2': index !== recipeForm.ingredients.length - 1
                             }"
                         >
                             <v-col
                             :cols="
-                                index === addNewRecipeForm.ingredients.length - 1 ? 10 : 12
+                                index === recipeForm.ingredients.length - 1 ? 10 : 12
                             "
                             >
                             <v-text-field
@@ -612,7 +727,7 @@
                             ></v-text-field>
                             </v-col>
                             <v-col
-                            v-if="index === addNewRecipeForm.ingredients.length - 1"
+                            v-if="index === recipeForm.ingredients.length - 1"
                             cols="2"
                             class="d-flex justify-end mt-2"
                             >
@@ -666,7 +781,7 @@
                                 variant="outlined"></v-textarea>
                         </v-row>
                         <div
-                            v-if="addNewRecipeForm.ingredients.length > 1"
+                            v-if="recipeForm.ingredients.length > 1"
                             class="d-flex justify-end mt-4"
                         >
                             <v-btn
@@ -686,7 +801,7 @@
                 <v-expansion-panel-title class="text-subtitle-1 font-weight-bold"><v-icon class="mx-3" icon="mdi-progress-helper"></v-icon> Recipe</v-expansion-panel-title>
                 <v-expansion-panel-text>
                     <div
-                        v-for="(step, index) in addNewRecipeForm.recipe"
+                        v-for="(step, index) in recipeForm.recipe"
                         class="recipe-fieldset d-flex flex-column pa-4 mb-4"
                         :key="index"
                         >
@@ -695,10 +810,10 @@
                         </p>
                         <v-row
                             align="center"
-                            :class="{ 'mb-2': index !== addNewRecipeForm.recipe.length - 1 }"
+                            :class="{ 'mb-2': index !== recipeForm.recipe.length - 1 }"
                         >
                             <v-col
-                            :cols="index === addNewRecipeForm.recipe.length - 1 ? 10 : 12"
+                            :cols="index === recipeForm.recipe.length - 1 ? 10 : 12"
                             >
                             <v-textarea
                                 v-model="step.instruction"
@@ -713,7 +828,7 @@
                             ></v-textarea>
                             </v-col>
                             <v-col
-                            v-if="index === addNewRecipeForm.recipe.length - 1"
+                            v-if="index === recipeForm.recipe.length - 1"
                             cols="2"
                             class="d-flex align-center justify-center"
                             >
@@ -728,7 +843,7 @@
                             </v-col>
                         </v-row>
                         <div
-                            v-if="addNewRecipeForm.recipe.length > 1"
+                            v-if="recipeForm.recipe.length > 1"
                             class="d-flex justify-end mt-4"
                         >
                             <v-btn
@@ -752,7 +867,7 @@
                     <v-select
                         class="mb-3"
                         label="Sources of Protein"
-                        v-model="addNewRecipeForm.nutrientSources.proteinSources"
+                        v-model="recipeForm.nutrientSources.proteinSources"
                         :items="proteinSources"
                         item-title="title"
                         item-value="value"
@@ -767,7 +882,7 @@
                     <v-select
                         class="mb-3"
                         label="Sources of Healthy Fats"
-                        v-model="addNewRecipeForm.nutrientSources.healthyFatSources"
+                        v-model="recipeForm.nutrientSources.healthyFatSources"
                         :items="healthyFatSources"
                         item-title="title"
                         item-value="value"
@@ -782,7 +897,7 @@
                     <v-select
                         class="mb-3"
                         label="Sources of Magnesium"
-                        v-model="addNewRecipeForm.nutrientSources.magnesiumSources"
+                        v-model="recipeForm.nutrientSources.magnesiumSources"
                         :items="magnesiumSources"
                         item-title="title"
                         item-value="value"
@@ -797,7 +912,7 @@
                     <v-select
                         class="mb-3"
                         label="Sources of Carbohydrates"
-                        v-model="addNewRecipeForm.nutrientSources.carbohydrateSources"
+                        v-model="recipeForm.nutrientSources.carbohydrateSources"
                         :items="carbohydrateSources"
                         item-title="title"
                         item-value="value"
@@ -812,7 +927,7 @@
                     <v-select
                         class="mb-3"
                         label="Sources of Fibre"
-                        v-model="addNewRecipeForm.nutrientSources.fibreSources"
+                        v-model="recipeForm.nutrientSources.fibreSources"
                         :items="fibreSources"
                         item-title="title"
                         item-value="value"
@@ -830,7 +945,7 @@
                     <v-select
                         class="mb-3"
                         label="Sources of Calcium"
-                        v-model="addNewRecipeForm.nutrientSources.calciumSources"
+                        v-model="recipeForm.nutrientSources.calciumSources"
                         :items="calciumSources"
                         item-title="title"
                         item-value="value"
@@ -845,7 +960,7 @@
                     <v-select
                         class="mb-3"
                         label="Sources of Vitamin A"
-                        v-model="addNewRecipeForm.nutrientSources.vitaminASources"
+                        v-model="recipeForm.nutrientSources.vitaminASources"
                         :items="vitaminASources"
                         item-title="title"
                         item-value="value"
@@ -860,7 +975,7 @@
                     <v-select
                         class="mb-3"
                         label="Sources of Vitamin B"
-                        v-model="addNewRecipeForm.nutrientSources.vitaminBSources"
+                        v-model="recipeForm.nutrientSources.vitaminBSources"
                         :items="vitaminBSources"
                         item-title="title"
                         item-value="value"
@@ -875,7 +990,7 @@
                     <v-select
                         class="mb-3"
                         label="Sources of Vitamin C"
-                        v-model="addNewRecipeForm.nutrientSources.vitaminCSources"
+                        v-model="recipeForm.nutrientSources.vitaminCSources"
                         :items="vitaminCSources"
                         item-title="title"
                         item-value="value"
@@ -890,7 +1005,7 @@
                     <v-select
                         class="mb-3"
                         label="Sources of Vitamin D"
-                        v-model="addNewRecipeForm.nutrientSources.vitaminDSources"
+                        v-model="recipeForm.nutrientSources.vitaminDSources"
                         :items="vitaminDSources"
                         item-title="title"
                         item-value="value"
@@ -905,7 +1020,7 @@
                     <v-select
                         class="mb-3"
                         label="Sources of Vitamin K"
-                        v-model="addNewRecipeForm.nutrientSources.vitaminKSources"
+                        v-model="recipeForm.nutrientSources.vitaminKSources"
                         :items="vitaminKSources"
                         item-title="title"
                         item-value="value"
@@ -928,7 +1043,7 @@
                         <v-icon icon="mdi-youtube"></v-icon>
                         <p class="text-subtitle-1 font-weight-bold mb-3">Link</p>
                         <v-text-field
-                            v-model="addNewRecipeForm.attachments.link"
+                            v-model="recipeForm.attachments.link"
                             class="mb-3"
                             label="Link to YouTube Video"
                             density="comfortable"
@@ -946,7 +1061,7 @@
                         <v-icon icon="mdi-folder-play"></v-icon>
                         <p class="text-subtitle-1 font-weight-bold mb-3">Upload Video</p>
                         <v-file-upload
-                            v-model="addNewRecipeForm.attachments.video"
+                            v-model="recipeForm.attachments.video"
                             title="Drag and drop a recipe video here (Optional)"
                             class="mb-3"
                             divider-text="or"
@@ -965,7 +1080,7 @@
             </v-expansion-panel>
         </v-expansion-panels>
         <v-textarea
-            v-model="addNewRecipeForm.additionalRemarks"
+            v-model="recipeForm.additionalRemarks"
             label="Any additional remarks?"
             class="mb-3"
             prepend-inner-icon="mdi-comment-text-multiple-outline"
@@ -976,12 +1091,15 @@
             auto-grow>
         </v-textarea>
         <v-btn
+            v-if="props.enableDraft"
             color="secondary"
             prepend-icon="mdi-content-save"
             rounded="pill"
             variant="tonal"
             :disabled="!canSaveDraft"
-            @click="saveRecipeDraft">Save draft
+            @click="saveRecipeDraft"
+        >
+            Save draft
         </v-btn>
       </template>
     </ReusableForm>
@@ -997,49 +1115,4 @@
         border-radius: 16px;
         background-color: rgba(var(--v-theme-surface-variant), 0.55);
     }
-</style> -->
-<script setup>
-import RecipeForm from "../../components/user-interface/forms/RecipeForm.vue";
-import { useRecipesPiniaStore } from "../../stores/recipesPiniaStore.js";
-import { useRouter } from "vue-router";
-
-const recipesPiniaStore = useRecipesPiniaStore();
-const router = useRouter();
-
-const RECIPE_DRAFT_KEY = '887e86259b2fbe4be65c9fd2fa7014f900408948';
-
-const submitNewRecipe = async (recipeToSave) => {
-    try {
-        await recipesPiniaStore.addNewRecipe(recipeToSave);
-
-        snackbar.add({
-            type: 'success',
-            text: 'Recipe has been updated successfully!',
-            dismissible: true,
-            duration: 5000
-        });
-
-        await router.push('/recipes-catalogue');
-    } catch(error) {
-        console.error(error);
-
-        snackbar.add({
-            type: 'error',
-            text: 'Recipe could not be added!',
-            dismissible: true,
-            duration: 5000
-        });
-    }
-};
-</script>
-
-<template>
-    <RecipeForm
-        title="Add a new recipe"
-        button-text="Add new recipe"
-        button-colour="primary"
-        :enable-draft="true"
-        :draft-key="RECIPE_DRAFT_KEY"
-        @submit="submitNewRecipe"
-    />
-</template>
+</style>

@@ -116,5 +116,5 @@ export const useAuthenticationPiniaStore = defineStore('authentication', () => {
         });
     }
 
-    return { userAccount, isLoading, errorMessage, isAuthenticated, registerUser, authenticateUser, initialiseAuthenticationListener, loginWithGoogleCredentials, logout, getUserProfileById, trackAuthenticationState, isAuthenticationReady };
+    return { userAccount, userProfile, isLoading, errorMessage, isAuthenticated, registerUser, authenticateUser, initialiseAuthenticationListener, loginWithGoogleCredentials, logout, getUserProfileById, trackAuthenticationState, isAuthenticationReady };
 });

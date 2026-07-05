@@ -17,6 +17,7 @@
         item-value="value"
         density="comfortable"
         variant="outlined"
+        chips
         clearable
         @update:model-value="emit('update:modelValue', $event)"/>
 </template>

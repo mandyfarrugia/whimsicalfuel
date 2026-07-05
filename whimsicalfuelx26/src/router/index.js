@@ -8,6 +8,8 @@ import StatusCode404NotFoundView from '../views/responses/StatusCode404NotFoundV
 import UserProfileView from '../views/restricted-views/UserProfileView.vue';
 import { useAuthenticationPiniaStore } from '../stores/authenticationPiniaStore.js';
 import AddNewRecipeView from '../views/restricted-views/AddNewRecipeView.vue';
+import PendingRecipesView from '../views/restricted-views/PendingRecipesView.vue';
+import ModifyExistingRecipe from '../views/restricted-views/ModifyExistingRecipe.vue';
 
 const routes = [
     { path: '/', redirect: '/login' },
@@ -44,10 +46,27 @@ const routes = [
         }
     },
     {
+        path: '/recipes/:id/edit',
+        name: 'edit-recipe',
+        component: ModifyExistingRecipe,
+        meta: {
+            requiresAuthentication: true
+        }
+    },
+    {
         path: '/user-profile',
         component: UserProfileView,
         meta: {
             requiresAuth: true
+        }
+    },
+    {
+        path: '/admin/pending-recipes',
+        name: 'pending-recipes',
+        component: PendingRecipesView,
+        meta: {
+            requiresAuthentication: true,
+            requiresAdministrator: true
         }
     },
     {

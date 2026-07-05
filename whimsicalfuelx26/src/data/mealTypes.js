@@ -1,4 +1,4 @@
-const foodCategories = [
+const mealTypes = [
     { title: 'Pizza 🍕', value: 'Pizza' },
     { title: 'Pasta 🍝', value: 'Pasta' },
     { title: 'Desserts 🍰', value: 'Desserts' },
@@ -11,4 +11,4 @@ const foodCategories = [
     { title: 'Seafood 🦞', value: 'Seafood' }
 ];
 
-export { foodCategories };
+export { mealTypes };
