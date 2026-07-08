@@ -81,11 +81,28 @@
     });
 
     watch(
-        [searchQuery, selectedMealType, selectedMealPeriod, selectedProteinType, selectedSortingOption],
+        [
+            searchQuery,
+            selectedMealType,
+            selectedMealPeriod,
+            selectedProteinType,
+            selectedSortingOption
+        ],
         () => {
             currentPage.value = 1;
         }
     );
+
+    watch(totalPages, (newTotalPages) => {
+        if (newTotalPages === 0) {
+            currentPage.value = 1;
+            return;
+        }
+
+        if (currentPage.value > newTotalPages) {
+            currentPage.value = newTotalPages;
+        }
+    });
 
     const deleteRecipe = async (recipe) => {
         try {
@@ -129,13 +146,50 @@
                 message="Unfortunately, no recipes are available at the moment! Please check back later!"
             />
         </div>
-        <div v-if="!isRecipesLoading && totalPages > 0" class="d-flex justify-center mt-6">
+        <div
+            v-if="!isRecipesLoading && totalPages > 1"
+            class="pagination-wrapper"
+        >
             <v-pagination
                 v-model="currentPage"
                 :length="totalPages"
-                rounded="pill"
-                color="primary"/>
+                :total-visible="5"
+                rounded="circle"
+                color="primary"
+                density="comfortable"
+                :disabled="isRecipesLoading"
+                :key="`pagination-${totalPages}`"
+            />
         </div>
-        <p v-if="!isRecipesLoading && totalPages > 0" class="text-center mt-1">Page {{ currentPage }} of {{ totalPages }}</p>
+
+        <p
+            v-if="!isRecipesLoading && totalPages > 1"
+            class="text-center mt-1"
+        >
+            Page {{ currentPage }} of {{ totalPages }}
+        </p>
     </div>
 </template>
+<style scoped>
+    .pagination-wrapper {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: 24px;
+        min-height: 64px;
+        overflow: hidden;
+    }
+
+    .pagination-wrapper :deep(.v-pagination) {
+        flex-wrap: nowrap;
+    }
+
+    .pagination-wrapper :deep(.v-btn) {
+        transition: none !important;
+    }
+
+    .pagination-wrapper :deep(.v-ripple__container) {
+        display: none !important;
+    }
+</style>

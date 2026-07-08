@@ -9,9 +9,12 @@ import 'animate.css';
 import './style.css';
 import { SnackbarService, Vue3Snackbar } from "vue3-snackbar";
 import "vue3-snackbar/styles";
+import Toast from "vue-toastification";
+import "vue-toastification/dist/index.css";
 
 const app = createApp(App);
 app.use(createPinia());
+app.use(Toast);
 app.use(vuetifySetup);
 app.use(router);
 app.use(SnackbarService);

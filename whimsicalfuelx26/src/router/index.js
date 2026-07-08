@@ -57,7 +57,7 @@ const routes = [
         path: '/user-profile',
         component: UserProfileView,
         meta: {
-            requiresAuth: true
+            requiresAuthentication: true
         }
     },
     {

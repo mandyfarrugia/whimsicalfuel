@@ -21,7 +21,7 @@
       title: 'Add New Recipe',
       route: '/add-new-recipe'
     }
-  ]
+  ];
 </script>
 <template>
   <v-app class="bg-background">
@@ -31,7 +31,7 @@
       subtitle="One step closer to a healthier you!"
       :drawer-items="drawerItems"></NavigationDrawer>
     <AppBar v-model:drawer="drawer"></AppBar>
-    <v-main class="d-flex fill-height justify-center align-center">
+    <v-main class="bg-background d-flex fill-height justify-center align-center">
       <router-view></router-view>
       <vue3-snackbar
         bottom end

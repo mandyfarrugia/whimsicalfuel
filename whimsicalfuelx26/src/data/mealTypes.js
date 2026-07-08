@@ -8,7 +8,8 @@ const mealTypes = [
     { title: 'Patties 🧆', value: 'Patties' },
     { title: 'Main Dish 🍽️', value: 'Main Dish' },
     { title: 'Sushi 🍣', value: 'Sushi' },
-    { title: 'Seafood 🦞', value: 'Seafood' }
+    { title: 'Seafood 🦞', value: 'Seafood' },
+    { title: 'Pastry 🥐', value: 'Pastry' }
 ];
 
 export { mealTypes };

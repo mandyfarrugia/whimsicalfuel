@@ -9,11 +9,15 @@
     import OrDivider from '../../components/user-interface/dividers/OrDivider.vue';
     import { useRouter } from 'vue-router';
     import { useCustomFileUploadValidation } from "../../composables/useCustomFileUploadValidation.js";
+    import { useAnimationHelper } from "../../composables/useAnimationHelper.js";
+    import { useToast } from "vue-toastification";
 
     const { isDateValid, cannotBeFromTheFuture, isAtLeastOfMinimumAge }  = useCustomDateValidation();
     const { isFileUploadAnImage, isFileUploadSizeValid, minimumDimensions } = useCustomFileUploadValidation();
     const authenticationPiniaStore = useAuthenticationPiniaStore();
+    const { getErrorAnimationClass } = useAnimationHelper();
     const router = useRouter();
+    const toast = useToast();
 
     const errorMessage = ref('');
 
@@ -104,7 +108,7 @@
             email: helpers.withMessage('Email address must be in the correct format!', email)
         },
         profilePicture: {
-            required: helpers.withMessage('Profile picture is required!', required),
+            // required: helpers.withMessage('Profile picture is required!', required),
             isFileUploadAnImage,
             isFileUploadSizeValid: isFileUploadSizeValid(2),
             minimumDimensions: minimumDimensions(200, 200)
@@ -183,93 +187,141 @@
             @submit="registerUser">
             <template #form-content>
                 <v-text-field
+                    class="mb-4"
                     :error="v$.firstName.$error"
                     :error-messages="validationErrors.firstName"
+                    :class="[getErrorAnimationClass(v$.firstName)]"
                     v-model="registrationForm.firstName"
                     :counter="inputFieldsLimits.firstName.maxLength"
                     label="First Name"
                     density="comfortable"
-                    variant="outlined">
+                    variant="outlined"
+                    hide-details="auto">
                 </v-text-field>
                 <v-text-field
+                    class="mb-4"
                     :error="v$.lastName.$error"
                     :error-messages="validationErrors.lastName"
+                    :class="[getErrorAnimationClass(v$.lastName)]"
                     v-model="registrationForm.lastName"
                     :counter="inputFieldsLimits.lastName.maxLength"
                     label="Last Name"
                     density="comfortable"
-                    variant="outlined">
+                    variant="outlined"
+                    hide-details="auto">
                 </v-text-field>
                 <v-text-field
+                    class="mb-4"
                     :error="v$.username.$error"
                     :error-messages="validationErrors.username"
+                    :class="[getErrorAnimationClass(v$.username)]"
                     v-model="registrationForm.username"
                     :counter="inputFieldsLimits.username.maxLength"
                     label="Username"
                     density="comfortable"
-                    variant="outlined">
+                    variant="outlined"
+                    hide-details="auto">
                 </v-text-field>
                 <v-text-field
-                    :error="v$.dateOfBirth.$error",
+                    class="mb-4"
+                    :error="v$.dateOfBirth.$error"
                     :error-messages="validationErrors.dateOfBirth"
+                    :class="[getErrorAnimationClass(v$.dateOfBirth)]"
                     v-model="registrationForm.dateOfBirth"
                     label="Date of Birth"
                     type="date"
                     density="comfortable"
-                    variant="outlined">
+                    variant="outlined"
+                    hide-details="auto">
                 </v-text-field>
                 <v-text-field
+                    class="mb-4"
                     :error="v$.emailAddress.$error"
                     :error-messages="validationErrors.emailAddress"
+                    :class="[getErrorAnimationClass(v$.emailAddress)]"
                     v-model="registrationForm.emailAddress"
                     label="Email Address"
                     density="comfortable"
-                    variant="outlined">
+                    variant="outlined"
+                    hide-details="auto">
                 </v-text-field>
-                <v-file-input
-                    v-model="registrationForm.profilePicture"
-                    :class="{ 'input-invalid' : v$.profilePicture.$error }"
-                    :error="v$.profilePicture.$error"
-                    :error-messages="validationErrors.profilePicture"
-                    prepend-icon="mdi-file-image"
-                    label="Choose your profile picture"
-                    density="comfortable"
-                    variant="outlined">
-                </v-file-input>
-                <v-img
-                    @contextmenu.prevent.stop="toast.warning('Image previews cannot be saved!')"
-                    draggable="false"
-                    @dragstart.prevent
-                    @drag.prevent
-                    class="profile-picture-preview mb-3"
-                    v-if="profilePicturePreviewURL && !v$.profilePicture.$error"
-                    :src="profilePicturePreviewURL"
-                />
-                <v-btn
-                    v-if="profilePicturePreviewURL && !v$.profilePicture.$error"
-                    prepend-icon="mdi-close"
-                    @click="removeProfilePicturePreview"
-                    class="mb-5"
-                    color="#ca3425">
-                    Remove preview
-                </v-btn>
+                <div class="mb-4">
+                    <div class="profile-picture-heading">
+                        <v-icon
+                            icon="mdi-account-circle"
+                            color="primary"
+                            size="26"
+                            class="profile-picture-heading-icon"
+                        />
+                        <span class="text-subtitle-1 font-weight-bold profile-picture-heading-text">
+                            Upload Profile Picture
+                        </span>
+                    </div>
+                    <p class="text-body-2 text-medium-emphasis mb-3">
+                        Upload a clear square image, maximum 2MB.
+                    </p>
+                    <v-file-upload
+                        v-model="registrationForm.profilePicture"
+                        title="Drag and drop your profile picture here"
+                        divider-text="or"
+                        browse-text="Browse image"
+                        accept="image/*"
+                        density="default"
+                        clearable
+                        @click:clear="removeProfilePicturePreview"
+                        :error="v$.profilePicture.$error"
+                        :error-messages="validationErrors.profilePicture"
+                        hide-details="auto"
+                    />
+                    <div
+                        v-if="profilePicturePreviewURL && !v$.profilePicture.$error"
+                        class="d-flex flex-column align-center"
+                    >
+                        <v-avatar
+                            size="250"
+                            class="profile-picture-avatar mb-3"
+                        >
+                            <v-img
+                                :src="profilePicturePreviewURL"
+                                cover
+                                draggable="false"
+                                @contextmenu.prevent.stop="toast.warning('Image previews cannot be saved!')"
+                                @dragstart.prevent
+                                @drag.prevent
+                            />
+                        </v-avatar>
+                        <v-btn
+                            prepend-icon="mdi-close"
+                            @click="removeProfilePicturePreview"
+                            color="error"
+                            variant="tonal"
+                            rounded="pill"
+                        >
+                            Remove picture
+                        </v-btn>
+                    </div>
+                </div>
                 <v-text-field
+                    class="mb-4"
                     :error="v$.password.$error"
                     :error-messages="validationErrors.password"
                     v-model="registrationForm.password"
                     label="Password"
                     type="password"
                     density="comfortable"
-                    variant="outlined">
+                    variant="outlined"
+                    hide-details="auto">
                 </v-text-field>
                 <v-text-field
+                    class="mb-4"
                     :error="v$.confirmPassword.$error"
                     :error-messages="validationErrors.confirmPassword"
                     v-model="registrationForm.confirmPassword"
                     label="Confirm Password"
                     type="password"
                     density="comfortable"
-                    variant="outlined">
+                    variant="outlined"
+                    hide-details="auto">
                 </v-text-field>
             </template>
             <template #actions>
@@ -281,3 +333,26 @@
         </ReusableForm>
     </div>
 </template>
+<style scoped>
+    .profile-picture-heading {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 8px;
+    }
+
+    .profile-picture-heading-icon {
+        flex-shrink: 0;
+        line-height: 1;
+    }
+
+    .profile-picture-heading-text {
+        line-height: 1;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .profile-picture-avatar {
+        border: 2px solid #E7E2DA;
+    }
+</style>

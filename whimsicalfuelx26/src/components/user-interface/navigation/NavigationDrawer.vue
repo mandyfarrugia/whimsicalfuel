@@ -1,5 +1,7 @@
 <script setup>
     import { useAuthenticationPiniaStore } from '../../../stores/authenticationPiniaStore';
+    import { useToast } from "vue-toastification";
+    import { useRouter } from 'vue-router';
 
     defineProps({
         title: String,
@@ -22,9 +24,16 @@
         }
     });
 
+    const router = useRouter();
+    const toast = useToast();
+
     const emit = defineEmits(['update:modelValue']);
 
     const authenticationPiniaStore = useAuthenticationPiniaStore();
+
+    const getChipColourBasedOnRole = (role) => {
+      return role === 'Administrator' ? 'primary' : 'secondary';
+    }
 </script>
 <template>
     <v-navigation-drawer
@@ -50,12 +59,46 @@
           <v-list v-if="authenticationPiniaStore.isAuthenticated">
             <div class="d-flex align-center justify-space-between">
               <div class="d-flex align-center">
-                <v-avatar size="50" class="mx-2 mr-3">
-                  <v-img src="https://static.vecteezy.com/system/resources/thumbnails/001/840/618/small/picture-profile-icon-male-icon-human-or-people-sign-and-symbol-free-vector.jpg"></v-img>
-                </v-avatar>
-                <div class="py-2">
-                  <div class="text-subtitle-2 font-weight-medium">User</div>
-                  <div class="text-caption text-grey">User</div>
+                  <v-avatar
+                      size="60"
+                      class="mx-2 mr-3"
+                      color="primary"
+                      variant="tonal"
+                  >
+                      <v-img
+                          v-if="authenticationPiniaStore.userProfile?.profilePicture"
+                          :src="authenticationPiniaStore.userProfile.profilePicture"
+                          @click="router.push('/user-profile')"
+                          draggable="false"
+                          @contextmenu.prevent.stop="toast.warning('Image previews cannot be saved!')"
+                          @dragstart.prevent
+                          @drag.prevent
+                          cover
+                      />
+                      <v-icon
+                          v-else
+                          icon="mdi-account"
+                          size="32"
+                      />
+                  </v-avatar>
+                  <div class="drawer-user-details">
+                    <div class="drawer-user-name">
+                        {{ authenticationPiniaStore.userProfile?.firstName }}
+                        {{ authenticationPiniaStore.userProfile?.lastName }}
+                    </div>
+
+                    <div class="drawer-username">
+                        @{{ authenticationPiniaStore.userProfile?.username }}
+                    </div>
+
+                    <v-chip
+                        size="x-small"
+                        :color="getChipColourBasedOnRole(authenticationPiniaStore.userProfile?.role)"
+                        variant="tonal"
+                        class="drawer-role-chip"
+                    >
+                        {{ authenticationPiniaStore.userProfile?.role }}
+                    </v-chip>
                 </div>
               </div>
               <v-btn class="mr-2" prepend-icon="mdi-logout" variant="text" @click="authenticationPiniaStore.logout()"/>
@@ -67,5 +110,34 @@
           </v-list>
         </div>
       </div>
-      </v-navigation-drawer>
+    </v-navigation-drawer>
 </template>
+<style scoped>
+    .drawer-user-details {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
+        min-width: 0;
+    }
+
+    .drawer-user-name {
+        font-size: 0.95rem;
+        font-weight: 600;
+        line-height: 1.15;
+    }
+
+    .drawer-username {
+        font-size: 0.75rem;
+        line-height: 1.1;
+        color: rgba(var(--v-theme-on-surface), 0.55);
+    }
+
+    .drawer-role-chip {
+        margin-top: 3px;
+    }
+
+    v-avatar > v-img {
+      cursor: pointer;
+    }
+</style>

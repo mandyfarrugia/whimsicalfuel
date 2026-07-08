@@ -26,6 +26,8 @@
     import { useRecipesPiniaStore } from "../../stores/recipesPiniaStore.js";
     import { mealTypes } from "../../data/mealTypes.js";
 
+    import { useSnackbar } from "vue3-snackbar";
+
     const snackbar = useSnackbar();
     const lastSavedDraftSnapshot = ref('');
 
@@ -1002,7 +1004,9 @@
 import RecipeForm from "../../components/user-interface/forms/RecipeForm.vue";
 import { useRecipesPiniaStore } from "../../stores/recipesPiniaStore.js";
 import { useRouter } from "vue-router";
+import { useSnackbar } from "vue3-snackbar";
 
+const snackbar = useSnackbar();
 const recipesPiniaStore = useRecipesPiniaStore();
 const router = useRouter();
 
@@ -1032,7 +1036,6 @@ const submitNewRecipe = async (recipeToSave) => {
     }
 };
 </script>
-
 <template>
     <RecipeForm
         title="Add a new recipe"
